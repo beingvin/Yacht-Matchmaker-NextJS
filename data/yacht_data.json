@@ -1,0 +1,70 @@
+[
+  {
+    "id": "y001",
+    "yacht_name": "Black Diamond",
+    "size_ft": 52,
+    "type": "luxury-yacht",
+    "max_capacity": 10,
+    "crew": 3,
+    "location": "goa",
+    "rate_hr": 18000,
+    "min_duration_hr": 1,
+    "routes": ["mandovi river", "miramar beach", "grand island"],
+    "boarding_point": "Captain of Ports Jetty, Panjim",
+    "photos": [
+      "/yachts/black_diamond_exterior.jpg",
+      "/yachts/black_diamond_flybridge.jpg",
+      "/yachts/black_diamond_cabin.jpg"
+    ],
+    "occasion": ["birthday party", "anniversary", "family hangout", "bachelor"],
+    "features": ["music system", "1 bedroom", "salon", "flybridge", "aft deck"],
+    "inclusions": ["welcome drinks", "mineral water", "light snacks", "fuel", "crew"],
+    "food_included": false,
+    "vibe": ["luxury", "party", "romantic"]
+  },
+  {
+    "id": "y002",
+    "yacht_name": "Sea Whisper",
+    "size_ft": 38,
+    "type": "catamaran",
+    "max_capacity": 8,
+    "crew": 2,
+    "location": "goa",
+    "rate_hr": 12000,
+    "min_duration_hr": 2,
+    "routes": ["baga beach", "calangute", "anjuna beach"],
+    "boarding_point": "Baga Jetty",
+    "photos": [
+      "/yachts/sea_whisper_exterior.jpg",
+      "/yachts/sea_whisper_deck.jpg",
+      "/yachts/sea_whisper_cockpit.jpg"
+    ],
+    "occasion": ["family hangout", "birthday party", "sunset cruise"],
+    "features": ["open deck", "sound system", "shade canopy"],
+    "inclusions": ["mineral water", "fuel", "crew"],
+    "food_included": false,
+    "vibe": ["chill", "family", "party"]
+  },
+  {
+    "id": "y003",
+    "yacht_name": "Azure Voyager",
+    "size_ft": 65,
+    "type": "super-yacht",
+    "max_capacity": 30,
+    "crew": 5,
+    "location": "mumbai",
+    "rate_hr": 35000,
+    "min_duration_hr": 2,
+    "routes": ["gateway of india", "mandwa", "alibaug", "mumbai harbor"],
+    "boarding_point": "Gateway of India Jetty 5",
+    "photos": [
+      "/yachts/azure_voyager_exterior.jpg",
+      "/yachts/azure_voyager_salon.jpg"
+    ],
+    "occasion": ["corporate", "luxury party", "wedding reception", "birthday"],
+    "features": ["air-conditioned salon", "upper flybridge", "state rooms", "surround sound"],
+    "inclusions": ["welcome mocktails", "gourmet finger foods", "safety gear", "captain + crew"],
+    "food_included": true,
+    "vibe": ["ultra-luxury", "corporate", "vip"]
+  }
+]

@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credentials
+*gcp-key*.json
+credentials.json
+
+# user chat sessions
+/data/user_sessions.json
+
+# Local-only LLM connectivity check
+/scripts/check-llm-connectivity.mjs

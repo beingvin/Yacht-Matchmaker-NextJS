@@ -1,0 +1,32 @@
+[
+  {
+    "id": "t001",
+    "theme_name": "Romantic Sunset",
+    "vibe_tags": ["romantic", "sunset", "calm"],
+    "occasion_tags": ["anniversary", "proposal", "couple"],
+    "decor": ["rose petals on table", "warm lantern lights", "white drape accents"],
+    "music_keywords": ["acoustic love", "lofi romance"],
+    "mood_description": "An intimate setting for couples with ambient sunset lighting.",
+    "food_and_drinks": ["fruit platter", "mocktails", "light snacks"]
+  },
+  {
+    "id": "t002",
+    "theme_name": "Party Night",
+    "vibe_tags": ["party", "energetic", "night"],
+    "occasion_tags": ["birthday", "bachelor", "bachelorette"],
+    "decor": ["LED neon strips", "balloons", "laser lights"],
+    "music_keywords": ["EDM", "bollywood party", "commercial hits"],
+    "mood_description": "High-energy celebration ambiance with dynamic party lighting.",
+    "food_and_drinks": ["chips & snacks", "soft drinks", "mocktails"]
+  },
+  {
+    "id": "t003",
+    "theme_name": "Family Chillout",
+    "vibe_tags": ["family", "relaxed", "chill"],
+    "occasion_tags": ["family hangout", "kids", "day trip"],
+    "decor": ["pastel cushions", "shaded canopy lounge"],
+    "music_keywords": ["soft pop", "retro classics"],
+    "mood_description": "Spacious, comfortable leisure setting for families.",
+    "food_and_drinks": ["assorted sandwiches", "fresh juices", "finger food"]
+  }
+]
