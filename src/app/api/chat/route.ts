@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
-import { createYachtAgentGraph, YachtAgentState } from '@/lib/agent/graph';
+import { runYachtConcierge } from '@/lib/agent/graph';
 import {
   getAllSessions,
   getSession,
@@ -41,13 +41,11 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export async function POST(req: NextRequest) {
   try {
     const { message, user_id, session_id } = await req.json();
 
-    if (!message || !user_id) {
+    if (typeof message !== 'string' || !message.trim() || typeof user_id !== 'string' || !user_id) {
       return NextResponse.json({ error: 'Missing message or user ID' }, { status: 400 });
     }
 
@@ -68,11 +66,6 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const sendTrace = (step: string, icon: string, label: string) => {
-          const payload = JSON.stringify({ type: 'trace', step, icon, label });
-          controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
-        };
-
         const sendFinal = (response: string) => {
           const payload = JSON.stringify({
             type: 'final',
@@ -83,47 +76,13 @@ export async function POST(req: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
         };
 
+        const sendError = (error: string) => {
+          const payload = JSON.stringify({ type: 'error', error });
+          controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+        };
+
         try {
-          // 1. Initial review trace
-          sendTrace('init', 'sparkles', 'Ariel is reviewing your request...');
-          await sleep(250);
-
-          // 2. Instantiate and execute the LangGraph workflow
-          const graph = createYachtAgentGraph();
-
-          // We check whether the user is confirming or if this will trigger the pipeline
-          const lowerMsg = message.toLowerCase().trim();
-          const isConfirming =
-            /\b(yes|proceed|confirm|go ahead|sure|sounds good|book it|do it)\b/i.test(lowerMsg) ||
-            /\b(generate|create|prepare|make|build|provide|send|view|show)\b.*\bitinerar/i.test(lowerMsg) ||
-            lowerMsg.includes('proceed with itinerary') ||
-            lowerMsg.includes('confirm booking');
-
-          if (isConfirming) {
-            // Emit trace milestones for the multi-agent pipeline
-            sendTrace('planning', 'compass', 'Initiating charter concierge planning...');
-            await sleep(350);
-            sendTrace('yacht', 'ship', 'Searching available luxury yachts in catalog...');
-            await sleep(400);
-            sendTrace('theme', 'sparkles', 'Matching celebration theme & curated decor...');
-            await sleep(350);
-            sendTrace('safety', 'compass', 'Assessing sea conditions & safety protocols...');
-            await sleep(350);
-            sendTrace('compiling', 'receipt', 'Calculating charter rates & itinerary inclusions...');
-            await sleep(400);
-            sendTrace('itinerary', 'document', 'Finalizing bespoke charter itinerary & photo gallery...');
-            await sleep(400);
-          }
-
-          // Execute LangGraph
-          const result = await graph.invoke({
-            messages: langChainMessages,
-          });
-
-          const responseText =
-            result.response_text ||
-            result.final_itinerary ||
-            "I'm here to assist with your luxury yacht charter.";
+          const responseText = await runYachtConcierge(langChainMessages);
 
           // Update and save session
           const updatedMessages: StoredMessage[] = [
@@ -150,9 +109,7 @@ export async function POST(req: NextRequest) {
           controller.close();
         } catch (err: any) {
           console.error('LangGraph streaming execution error:', err);
-          const fallback =
-            'I encountered a slight delay while coordinating with the harbor office. Please allow me a moment to re-evaluate your itinerary request.';
-          sendFinal(fallback);
+          sendError(err instanceof Error ? err.message : String(err));
           controller.close();
         }
       },

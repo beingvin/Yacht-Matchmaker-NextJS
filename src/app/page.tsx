@@ -29,9 +29,6 @@ import remarkGfm from 'remark-gfm';
 import { Sidebar, ChatSession, Message } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 
-const DEFAULT_FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=1200&q=80';
-
 const USER_ID_KEY = 'yacht_concierge_user_id';
 const SESSIONS_STORAGE_KEY = 'yacht_concierge_sessions';
 const ACTIVE_SESSION_KEY = 'yacht_concierge_active_session_id';
@@ -436,6 +433,25 @@ export default function YachtConciergeApp() {
                       : s
                   )
                 );
+              } else if (eventData.type === 'error') {
+                setCurrentTrace(null);
+                setSessions((prev) =>
+                  prev.map((s) =>
+                    s.id === activeSessionId
+                      ? {
+                          ...s,
+                          messages: [
+                            ...s.messages,
+                            {
+                              id: generateUUID(),
+                              text: `Request failed: ${eventData.error}`,
+                              sender: 'agent',
+                            },
+                          ],
+                        }
+                      : s
+                  )
+                );
               }
             } catch (jsonErr) {
               console.error('Error parsing SSE event:', jsonErr);
@@ -444,7 +460,8 @@ export default function YachtConciergeApp() {
         }
       } else {
         const data = await response.json();
-        const reply = data.response || data.text || 'Charter details confirmed.';
+        const reply = data.response || data.text;
+        if (!reply) throw new Error(data.error || 'The chat service returned no response.');
         setCurrentTrace(null);
         setSessions((prev) =>
           prev.map((s) =>
@@ -476,8 +493,7 @@ export default function YachtConciergeApp() {
                   ...s.messages,
                   {
                     id: generateUUID(),
-                    text:
-                      'I apologize for the momentary hesitation. Please confirm if you wish to explore Goa or Mumbai, and I will promptly prepare your bespoke itinerary.',
+                    text: `Request failed: ${err instanceof Error ? err.message : String(err)}`,
                     sender: 'agent',
                   },
                 ],
@@ -521,7 +537,7 @@ export default function YachtConciergeApp() {
             className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = DEFAULT_FALLBACK_IMAGE;
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
             }}
           />
         </div>
@@ -600,7 +616,15 @@ export default function YachtConciergeApp() {
               const itineraryMeta = !isUser ? parseItineraryMeta(message.text) : null;
               const photos = !isUser ? extractPhotos(message.text) : [];
               const cleanText = !isUser
-                ? formatMarkdownTables(message.text.replace(/###\s*📸\s*Yacht Photos[\s\S]*$/, '').trim())
+                ? formatMarkdownTables(
+                    message.text
+                      .replace(
+                        /(?:^|\r?\n)#{1,6}\s*[^\r\n]*(?:yacht\s+photos?|vessel\s+photo\s+gallery)[^\r\n]*(?:\r?\n|$)[\s\S]*$/i,
+                        ''
+                      )
+                      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+                      .trim()
+                  )
                 : message.text;
 
               return (
@@ -710,6 +734,7 @@ export default function YachtConciergeApp() {
                           h4: ({ node, ...props }) => (
                             <h4 className="mt-4 mb-2 text-sm font-semibold text-zinc-100 flex items-center gap-2" {...props} />
                           ),
+                          img: () => null,
                         }}
                       >
                         {cleanText}
@@ -763,10 +788,7 @@ export default function YachtConciergeApp() {
                                 alt={img.alt || 'Yacht photo'}
                                 loading="lazy"
                                 onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  if (target.src !== DEFAULT_FALLBACK_IMAGE) {
-                                    target.src = DEFAULT_FALLBACK_IMAGE;
-                                  }
+                                  (e.currentTarget as HTMLImageElement).style.display = 'none';
                                 }}
                                 className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                               />
