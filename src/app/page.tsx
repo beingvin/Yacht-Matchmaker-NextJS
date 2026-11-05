@@ -218,6 +218,19 @@ export default function YachtConciergeApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
+    const closeOnMobile = () => {
+      if (!desktopQuery.matches) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    closeOnMobile();
+    desktopQuery.addEventListener('change', closeOnMobile);
+    return () => desktopQuery.removeEventListener('change', closeOnMobile);
+  }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -588,7 +601,7 @@ export default function YachtConciergeApp() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 font-sans text-zinc-100 antialiased">
+    <div className="flex h-[100dvh] min-w-0 overflow-hidden bg-zinc-950 font-sans text-zinc-100 antialiased">
       {/* Lightbox Modal */}
       {lightboxImage && (
         <div
@@ -646,9 +659,9 @@ export default function YachtConciergeApp() {
       />
 
       {/* Main Chat Workspace */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-zinc-900/90">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-zinc-900/90">
         {/* Top Navbar */}
-        <header className="flex h-16 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/70 px-5 backdrop-blur-md">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/70 px-3 backdrop-blur-md sm:px-5">
           <div className="flex items-center gap-3">
             {!isSidebarOpen && (
               <button
@@ -687,11 +700,11 @@ export default function YachtConciergeApp() {
         </header>
 
         {/* Message Feed */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4 sm:py-6 md:px-8 scrollbar-thin">
           {messages.length <= 1 ? (
             guidedStep !== null ? (
-              <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-center py-6 sm:py-10">
-                <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5 shadow-2xl sm:p-8">
+              <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-start py-2 sm:justify-center sm:py-10">
+                <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-2xl sm:p-8">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
@@ -941,7 +954,7 @@ export default function YachtConciergeApp() {
                 </div>
               </section>
             ) : (
-            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-center py-6 sm:py-10">
+            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-start py-4 sm:justify-center sm:py-10">
               <div className="mb-7 text-center">
                 <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -1302,13 +1315,13 @@ export default function YachtConciergeApp() {
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-zinc-800/80 bg-zinc-950/80 p-4 md:p-5 backdrop-blur-md">
+        <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 md:p-5">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage(inputMessage);
             }}
-            className="mx-auto flex max-w-4xl items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 shadow-lg focus-within:border-amber-500/60 transition"
+            className="mx-auto flex min-h-12 max-w-4xl items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 px-3 py-2.5 shadow-lg focus-within:border-amber-500/60 transition sm:px-4"
           >
             <input
               ref={inputRef}
@@ -1317,13 +1330,13 @@ export default function YachtConciergeApp() {
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Inquire with Ariel (e.g., 'Sunset yacht cruise in Goa for 8 guests on Dec 15')..."
               disabled={isLoading}
-              className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 outline-none disabled:opacity-50"
+              className="min-w-0 flex-1 bg-transparent text-base text-zinc-100 placeholder-zinc-500 outline-none disabled:opacity-50 sm:text-sm"
             />
 
             <button
               type="submit"
               disabled={isLoading || !inputMessage.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
               aria-label="Send message"
             >
               {isLoading ? (

@@ -1,9 +1,16 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Yacht Matchmaker - Lite | Luxury Yacht Charter Concierge',
   description: 'AI-powered bespoke luxury yacht charter concierge for Goa and Mumbai coastline.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({
@@ -12,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full bg-zinc-950">
-      <body className="h-full w-full overflow-hidden antialiased bg-zinc-950 text-zinc-100">
+    <html lang="en" className="h-dvh bg-zinc-950">
+      <body className="h-dvh w-full overflow-hidden antialiased bg-zinc-950 text-zinc-100">
         {children}
       </body>
     </html>

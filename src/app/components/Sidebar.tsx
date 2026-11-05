@@ -101,6 +101,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingTitle, setEditingTitle] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const closeDrawerOnMobile = () => {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      onToggleOpen();
+    }
+  };
+
   // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -236,8 +242,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <>
               <button
                 type="button"
-                onClick={() => onSelectSession(session.id)}
-                className={`min-w-0 flex-1 px-3 py-2 text-left text-[13px] tracking-tight ${
+                onClick={() => {
+                  onSelectSession(session.id);
+                  closeDrawerOnMobile();
+                }}
+                className={`min-h-11 min-w-0 flex-1 px-3 py-2 text-left text-[13px] tracking-tight ${
                   isActive ? 'font-medium text-zinc-900' : 'text-zinc-600'
                 }`}
               >
@@ -271,7 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={`rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-800 ${
                     isMenuOpen
                       ? 'opacity-100 bg-zinc-100 text-zinc-800'
-                      : 'opacity-0 group-hover:opacity-100 focus:opacity-100'
+                      : 'opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus:opacity-100'
                   }`}
                   aria-label="Chat options"
                   title="Options"
@@ -358,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-zinc-200/90 bg-zinc-50/95 backdrop-blur-md transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[min(18rem,calc(100vw-1rem))] flex-col border-r border-zinc-200/90 bg-zinc-50/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md transition-transform duration-300 sm:w-72 md:static md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:hidden'
         }`}
       >
@@ -380,7 +389,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={onToggleOpen}
-            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-200/60 hover:text-zinc-700"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-200/60 hover:text-zinc-700"
             title="Collapse sidebar"
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -391,8 +400,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 space-y-2">
           <button
             type="button"
-            onClick={onNewChat}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-3.5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800"
+            onClick={() => {
+              onNewChat();
+              closeDrawerOnMobile();
+            }}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-3.5 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800"
           >
             <Plus className="h-4 w-4" />
             <span>New Charter Inquire</span>
@@ -405,7 +417,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               placeholder="Search charters..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200/90 bg-white pl-8 pr-3 py-1.5 text-xs text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-zinc-400"
+              className="min-h-11 w-full rounded-xl border border-zinc-200/90 bg-white py-2 pl-8 pr-3 text-xs text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-zinc-400"
             />
             {searchQuery && (
               <button
@@ -484,8 +496,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="border-t border-zinc-200/80 p-3">
           <button
             type="button"
-            onClick={onOpenSettings}
-            className="flex w-full items-center justify-between rounded-xl p-2 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200/60 hover:text-zinc-900"
+            onClick={() => {
+              onOpenSettings();
+              closeDrawerOnMobile();
+            }}
+            className="flex min-h-11 w-full items-center justify-between rounded-xl p-2 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200/60 hover:text-zinc-900"
           >
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4 text-zinc-500" />
