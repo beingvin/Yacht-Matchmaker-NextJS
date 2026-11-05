@@ -25,7 +25,7 @@ export async function planItinerary(requirements: UserRequirements): Promise<Iti
   });
   const plannerAgent = createReactAgent({
     llm: getVertexModel(), tools: [], name: 'charter_planning_agent',
-    prompt: 'You are the yacht planning agent. Choose one yacht only from the supplied eligible candidates and one theme from the supplied theme catalog. Use each selected item ID exactly. Provide a forecast assessment for the requested date and location, and safety protocols. If current marine data is unavailable to you, clearly say the forecast is an estimate that must be verified with the harbor authority. Never invent catalog facts.',
+    prompt: 'You are the yacht planning agent. Choose one yacht only from the supplied eligible candidates and one theme from the supplied theme catalog. Use each selected item ID exactly. Respect the selected theme recommended_timing when it fits the guest requested time, and explain any mismatch without changing the requested time. Provide a forecast assessment for the requested date and location, and safety protocols. If current marine data is unavailable to you, clearly say the forecast is an estimate that must be verified with the harbor authority. Never invent catalog facts.',
     responseFormat: planSchema,
   });
   const result = await plannerAgent.invoke({

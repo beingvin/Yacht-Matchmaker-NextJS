@@ -18,7 +18,7 @@ export async function presentItinerary(plan: ItineraryPlan): Promise<string> {
 - **Duration:** value
 - **Guests:** value
 
-Include sections for vessel allocation, theme and ambiance, pricing and inclusions, safety and marine forecast, and yacht photos. Include a Markdown image for every supplied yacht photo URL. State the hourly rate and total cost accurately. Do not add unsupported services or facts. Return only the itinerary Markdown.`,
+Include sections for vessel allocation, theme and ambiance, pricing and inclusions, safety and marine forecast, and yacht photos. Include the selected theme's recommended timing in the theme and ambiance section. Include a Markdown image for every supplied yacht photo URL. State the hourly rate and total cost accurately. Do not add unsupported services or facts. Return only the itinerary Markdown.`,
   });
   const response = await presenterAgent.invoke({ messages: [new HumanMessage(JSON.stringify(plan, null, 2))] });
   const responseMessage = [...response.messages].reverse().find((message) => message._getType() === 'ai' && !(message as { tool_calls?: unknown[] }).tool_calls?.length);

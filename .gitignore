@@ -47,5 +47,9 @@ credentials.json
 # user chat sessions
 /data/user_sessions.json
 
+# Local yacht inventory and uploaded vessel photos
+/data/*.json
+/public/yachts/
+
 # Local-only LLM connectivity check
 /scripts/check-llm-connectivity.mjs

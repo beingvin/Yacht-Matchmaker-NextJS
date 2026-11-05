@@ -444,7 +444,7 @@ export default function YachtConciergeApp() {
                             ...s.messages,
                             {
                               id: generateUUID(),
-                              text: `Request failed: ${eventData.error}`,
+                              text: eventData.error || 'I’m having trouble processing that request right now. Please try again in a moment.',
                               sender: 'agent',
                             },
                           ],
@@ -493,7 +493,7 @@ export default function YachtConciergeApp() {
                   ...s.messages,
                   {
                     id: generateUUID(),
-                    text: `Request failed: ${err instanceof Error ? err.message : String(err)}`,
+                    text: 'I’m having trouble processing that request right now. Please try again in a moment.',
                     sender: 'agent',
                   },
                 ],

@@ -1,6 +1,6 @@
 # Yacht Matchmaker - Lite
 
-AI-powered luxury yacht charter concierge for the coastlines of Mumbai and Goa, built with Next.js App Router, Tailwind CSS, LangGraph, and Google Cloud Vertex AI (`gemini-2.5-flash`).
+AI-powered luxury yacht charter concierge for the destinations listed in the yacht catalog, built with Next.js App Router, Tailwind CSS, LangGraph, and Google Cloud Vertex AI (`gemini-2.5-flash`).
 
 ## Agent workflow
 
@@ -10,7 +10,7 @@ AI-powered luxury yacht charter concierge for the coastlines of Mumbai and Goa, 
 - The planner selects from the yacht and theme catalogs, and the presenter returns Markdown using the summary labels parsed by the UI.
 - Agent or model failures are surfaced as errors. The itinerary workflow has no canned itinerary or model fallback.
 
-The curated theme data in `data/theme_catalog.json` is input inventory for planning, not an itinerary response template.
+Yacht inventory is loaded from `data/yacht_data.json`, and curated theme inventory, including each theme's recommended timing, is loaded from `data/theme_templates.json`. Theme data guides planning; it is not an itinerary response template. Yacht photos are served from the matching paths under `public/`.
 
 ## Getting Started
 

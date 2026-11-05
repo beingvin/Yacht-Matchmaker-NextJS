@@ -8,11 +8,11 @@ export interface Yacht {
 
 export interface Theme {
   id: string; theme_name: string; vibe_tags: string[]; occasion_tags: string[]; decor: string[];
-  music_keywords: string[]; mood_description: string; food_and_drinks: string[];
+  music_keywords: string[]; mood_description: string; food_and_drinks: string[]; recommended_timing: string;
 }
 
 export const RequirementsSchema = z.object({
-  location: z.enum(['Goa', 'Mumbai']).optional(), date: z.string().optional(), start_time: z.string().optional(),
+  location: z.string().optional(), date: z.string().optional(), start_time: z.string().optional(),
   duration_hr: z.number().optional(), guests: z.number().optional(), occasion: z.string().optional(),
   budget_total: z.number().optional(), requested_yacht_name: z.string().optional(),
 });

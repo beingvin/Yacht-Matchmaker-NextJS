@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
           sendFinal(responseText);
           controller.close();
         } catch (err: any) {
-          console.error('LangGraph streaming execution error:', err);
-          sendError(err instanceof Error ? err.message : String(err));
+          console.error('LangGraph streaming execution error:', err instanceof Error ? err.message : String(err));
+          sendError('I’m having trouble processing that request right now. Please try again in a moment.');
           controller.close();
         }
       },

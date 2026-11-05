@@ -15,5 +15,5 @@ export const yachtCheckerTool = tool(async ({ location, guests, yacht_name }) =>
 }, {
   name: 'yacht_checker',
   description: 'Look up yacht catalog details such as capacity, location, rates, routes, boarding point, photos, features, inclusions, and occasions. Use this for yacht questions. The catalog does not contain live booking availability. Do not invent catalog facts.',
-  schema: z.object({ location: z.enum(['Goa', 'Mumbai']).optional(), guests: z.number().optional(), yacht_name: z.string().optional() }),
+  schema: z.object({ location: z.string().optional(), guests: z.number().optional(), yacht_name: z.string().optional() }),
 });
