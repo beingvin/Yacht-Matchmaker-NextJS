@@ -17,6 +17,8 @@ import {
   X,
   Compass,
   Sparkles,
+  Loader2,
+  RotateCw,
 } from 'lucide-react';
 
 export interface Message {
@@ -45,6 +47,9 @@ interface SidebarProps {
   onRenameSession: (sessionId: string, newTitle: string) => void;
   onTogglePinSession: (sessionId: string) => void;
   onOpenSettings: () => void;
+  isLoadingSessions: boolean;
+  sessionsError: string | null;
+  onRetrySessions: () => void;
   onSelectQuickPrompt?: (prompt: string) => void;
 }
 
@@ -86,6 +91,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameSession,
   onTogglePinSession,
   onOpenSettings,
+  isLoadingSessions,
+  sessionsError,
+  onRetrySessions,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMenuSessionId, setActiveMenuSessionId] = useState<string | null>(null);
@@ -413,18 +421,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Chat History Grouping */}
         <div className="flex-1 overflow-y-auto px-2 py-1 scrollbar-thin">
-          {sessions.length === 0 ? (
+          {isLoadingSessions && sessions.length === 0 ? (
+            <div className="flex items-center justify-center gap-2 p-4 text-xs text-zinc-400" role="status">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading chat history…
+            </div>
+          ) : sessions.length === 0 && !sessionsError ? (
             <div className="p-4 text-center">
               <Compass className="mx-auto h-7 w-7 text-zinc-300" />
               <p className="mt-2 text-xs text-zinc-400">No charter inquiries yet</p>
             </div>
           ) : (
             <>
+              {sessionsError && (
+                <div
+                  className="m-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"
+                  role="alert"
+                >
+                  <p>{sessionsError}</p>
+                  <button
+                    type="button"
+                    onClick={onRetrySessions}
+                    disabled={isLoadingSessions}
+                    className="mt-2 inline-flex items-center gap-1.5 font-semibold hover:underline disabled:opacity-60"
+                  >
+                    {isLoadingSessions ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RotateCw className="h-3 w-3" />
+                    )}
+                    Try again
+                  </button>
+                </div>
+              )}
+              {isLoadingSessions && sessions.length > 0 && (
+                <p className="px-3 py-2 text-[11px] text-zinc-400" role="status">
+                  Syncing chat history…
+                </p>
+              )}
               {renderGroup('Pinned', pinned)}
               {renderGroup('Today', today)}
               {renderGroup('Yesterday', yesterday)}
               {renderGroup('Previous 7 Days', previous7Days)}
               {renderGroup('Older', older)}
+              {sessions.length > 0 &&
+                !sessionsError &&
+                !isLoadingSessions &&
+                !pinned.length &&
+                !today.length &&
+                !yesterday.length &&
+                !previous7Days.length &&
+                !older.length && (
+                  <p className="p-4 text-center text-xs text-zinc-400">
+                    No chats match your search.
+                  </p>
+                )}
             </>
           )}
         </div>

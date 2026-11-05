@@ -74,14 +74,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 <Shield className="h-3.5 w-3.5 text-zinc-600" />
-                Persistent Guest ID
+                Browser-linked Guest ID
               </span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-                Active Client
+              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-700">
+                Local profile
               </span>
             </div>
             <p className="mt-1 text-xs text-zinc-500 leading-relaxed">
-              Your inquiries, charter itineraries, and preference history are securely linked to this ID.
+              Your chat history is associated with this guest ID. It is not a password or sign-in credential, so avoid sharing it publicly.
             </p>
             <div className="mt-3 flex items-center gap-2">
               <input

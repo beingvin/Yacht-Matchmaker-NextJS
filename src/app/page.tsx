@@ -23,6 +23,8 @@ import {
   PanelLeftOpen,
   ArrowUp,
   Anchor,
+  RotateCw,
+  AlertCircle,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -61,6 +63,32 @@ interface TraceData {
 interface ExtendedMessage extends Message {
   trace?: TraceData;
 }
+
+interface GuidedCharterDetails {
+  location?: 'Goa' | 'Mumbai';
+  date?: string;
+  startTime?: string;
+  durationHours?: number;
+  guests?: number;
+  occasion?: string;
+}
+
+const GUIDED_TIME_OPTIONS = [
+  { label: 'Morning', value: '09:00' },
+  { label: 'Afternoon', value: '13:00' },
+  { label: 'Golden hour', value: '16:00' },
+  { label: 'Sunset', value: '17:00' },
+  { label: 'Evening', value: '19:00' },
+];
+
+const GUIDED_OCCASION_OPTIONS = [
+  'Sunset cruise',
+  'Birthday',
+  'Anniversary',
+  'Family day',
+  'Corporate',
+  'Just because',
+];
 
 const generateUUID = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -176,19 +204,28 @@ export default function YachtConciergeApp() {
   const [userId, setUserId] = useState('');
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState('');
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [sessionLoadAttempt, setSessionLoadAttempt] = useState(0);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chatError, setChatError] = useState<{ sessionId: string; query: string } | null>(null);
   const [currentTrace, setCurrentTrace] = useState<TraceData | null>(null);
+  const [guidedStep, setGuidedStep] = useState<number | null>(null);
+  const [guidedDetails, setGuidedDetails] = useState<GuidedCharterDetails>({});
+  const [customGuestCount, setCustomGuestCount] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize guest profile and restore sessions
   // This state must be initialized from browser storage after hydration to avoid server/client mismatches.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    let cancelled = false;
     const persistentId = getPersistentUserId();
     setUserId(persistentId);
 
@@ -221,13 +258,20 @@ export default function YachtConciergeApp() {
     }
 
     const savedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY) || initialSessions[0].id;
-    setSessions(initialSessions);
-    setActiveSessionId(savedActiveId);
+    if (!cancelled) {
+      setSessions(initialSessions);
+      setActiveSessionId(savedActiveId);
+      setIsLoadingSessions(true);
+      setSessionsError(null);
+    }
 
-    // Sync with backend API
-    fetch(`/api/chat?user_id=${encodeURIComponent(persistentId)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    const loadSessions = async () => {
+      try {
+        const response = await fetch(`/api/chat?user_id=${encodeURIComponent(persistentId)}`);
+        if (!response.ok) {
+          throw new Error(`History request failed (${response.status}).`);
+        }
+        const data = await response.json();
         if (data?.sessions && Array.isArray(data.sessions) && data.sessions.length > 0) {
           const remoteSessions: ChatSession[] = data.sessions.map((s: any) => ({
             id: s.session_id,
@@ -240,14 +284,28 @@ export default function YachtConciergeApp() {
               sender: m.sender,
             })),
           }));
-          setSessions(remoteSessions);
-          if (!remoteSessions.some((s) => s.id === savedActiveId)) {
-            setActiveSessionId(remoteSessions[0].id);
+          if (!cancelled) {
+            setSessions(remoteSessions);
+            if (!remoteSessions.some((s) => s.id === savedActiveId)) {
+              setActiveSessionId(remoteSessions[0].id);
+            }
           }
         }
-      })
-      .catch((err) => console.log('Local fallback for session load:', err));
-  }, []);
+      } catch (error) {
+        console.error('Chat history load error:', error);
+        if (!cancelled) {
+          setSessionsError('Could not sync chat history. Showing chats saved in this browser.');
+        }
+      } finally {
+        if (!cancelled) setIsLoadingSessions(false);
+      }
+    };
+
+    void loadSessions();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionLoadAttempt]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Save sessions to localStorage
@@ -267,6 +325,9 @@ export default function YachtConciergeApp() {
   const messages = activeSession?.messages || [];
 
   const handleNewChat = () => {
+    setGuidedStep(null);
+    setGuidedDetails({});
+    setCustomGuestCount('');
     const newId = generateUUID();
     const newSession: ChatSession = {
       id: newId,
@@ -332,11 +393,12 @@ export default function YachtConciergeApp() {
     handleNewChat();
   };
 
-  const handleSendMessage = async (textToSend: string) => {
+  const handleSendMessage = async (textToSend: string, isRetry = false) => {
     const query = textToSend.trim();
     if (!query || isLoading || !userId || !activeSession) return;
 
     setIsLoading(true);
+    setChatError(null);
     setInputMessage('');
 
     const userMsg: Message = {
@@ -358,17 +420,19 @@ export default function YachtConciergeApp() {
       ? query.slice(0, 32) + (query.length > 32 ? '...' : '')
       : activeSession.title;
 
-    setSessions((prev) =>
-      prev.map((s) =>
-        s.id === activeSessionId
-          ? {
-              ...s,
-              title: sessionTitle,
-              messages: [...s.messages, userMsg],
-            }
-          : s
-      )
-    );
+    if (!isRetry) {
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                title: sessionTitle,
+                messages: [...s.messages, userMsg],
+              }
+            : s
+        )
+      );
+    }
 
     try {
       const response = await fetch('/api/chat', {
@@ -390,6 +454,8 @@ export default function YachtConciergeApp() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
+        let receivedFinal = false;
+        let streamError: string | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -414,6 +480,11 @@ export default function YachtConciergeApp() {
                 });
               } else if (eventData.type === 'final') {
                 const finalReply = eventData.response || '';
+                if (!finalReply.trim()) {
+                  streamError = 'The chat service returned an empty response.';
+                  continue;
+                }
+                receivedFinal = true;
                 setCurrentTrace(null);
                 setSessions((prev) =>
                   prev.map((s) =>
@@ -434,30 +505,15 @@ export default function YachtConciergeApp() {
                   )
                 );
               } else if (eventData.type === 'error') {
-                setCurrentTrace(null);
-                setSessions((prev) =>
-                  prev.map((s) =>
-                    s.id === activeSessionId
-                      ? {
-                          ...s,
-                          messages: [
-                            ...s.messages,
-                            {
-                              id: generateUUID(),
-                              text: eventData.error || 'I’m having trouble processing that request right now. Please try again in a moment.',
-                              sender: 'agent',
-                            },
-                          ],
-                        }
-                      : s
-                  )
-                );
+                streamError = eventData.error || 'The chat service could not process that message.';
               }
             } catch (jsonErr) {
               console.error('Error parsing SSE event:', jsonErr);
             }
           }
         }
+        if (streamError) throw new Error(streamError);
+        if (!receivedFinal) throw new Error('The chat service ended without a response.');
       } else {
         const data = await response.json();
         const reply = data.response || data.text;
@@ -481,30 +537,46 @@ export default function YachtConciergeApp() {
           )
         );
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Chat error:', err);
       setCurrentTrace(null);
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? {
-                ...s,
-                messages: [
-                  ...s.messages,
-                  {
-                    id: generateUUID(),
-                    text: 'I’m having trouble processing that request right now. Please try again in a moment.',
-                    sender: 'agent',
-                  },
-                ],
-              }
-            : s
-        )
-      );
+      setChatError({ sessionId: activeSessionId, query });
     } finally {
       setIsLoading(false);
       setCurrentTrace(null);
     }
+  };
+
+  const handleRetrySessionLoad = () => {
+    setSessionLoadAttempt((attempt) => attempt + 1);
+  };
+
+  const handleGuidedDetailsChange = (details: Partial<GuidedCharterDetails>, nextStep: number) => {
+    setGuidedDetails((current) => ({ ...current, ...details }));
+    setGuidedStep(nextStep);
+  };
+
+  const handleGenerateGuidedItinerary = () => {
+    const { location, date, startTime, durationHours, guests, occasion } = guidedDetails;
+    if (!location || !date || !startTime || !durationHours || !guests || !occasion) return;
+
+    const request = [
+      'Please prepare a yacht charter itinerary with these details:',
+      `Location: ${location}`,
+      `Date: ${date}`,
+      `Start time: ${startTime}`,
+      `Duration: ${durationHours} hours`,
+      `Guests: ${guests}`,
+      `Occasion: ${occasion}`,
+    ].join('\n');
+
+    setGuidedStep(null);
+    void handleSendMessage(request);
+  };
+
+  const handleWelcomePrompt = (prompt: string) => {
+    setInputMessage(prompt);
+    inputRef.current?.focus();
   };
 
   const handleCopyText = async (id: string, text: string) => {
@@ -559,12 +631,18 @@ export default function YachtConciergeApp() {
         activeSessionId={activeSessionId}
         isOpen={isSidebarOpen}
         onToggleOpen={() => setIsSidebarOpen(!isSidebarOpen)}
-        onSelectSession={(id) => setActiveSessionId(id)}
+        onSelectSession={(id) => {
+          setGuidedStep(null);
+          setActiveSessionId(id);
+        }}
         onNewChat={handleNewChat}
         onDeleteSession={handleDeleteSession}
         onRenameSession={handleRenameSession}
         onTogglePinSession={handleTogglePinSession}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        isLoadingSessions={isLoadingSessions}
+        sessionsError={sessionsError}
+        onRetrySessions={handleRetrySessionLoad}
       />
 
       {/* Main Chat Workspace */}
@@ -601,15 +679,370 @@ export default function YachtConciergeApp() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-900/50 bg-emerald-950/40 px-3 py-1 text-xs text-emerald-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-medium">Fleet Docked: Goa & Mumbai</span>
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs text-zinc-300">
+              <MapPin className="h-3.5 w-3.5 text-amber-300" />
+              <span className="text-[11px] font-medium">Serving Goa & Mumbai</span>
             </div>
           </div>
         </header>
 
         {/* Message Feed */}
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 scrollbar-thin">
+          {messages.length <= 1 ? (
+            guidedStep !== null ? (
+              <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-center py-6 sm:py-10">
+                <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5 shadow-2xl sm:p-8">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                        Your charter, step by step
+                      </p>
+                      <h2 className="mt-2 text-2xl font-semibold text-white">
+                        {guidedStep === 6 ? 'Review your trip' : [
+                          'Choose your coast',
+                          'Pick a date',
+                          'Choose a departure time',
+                          'How long would you like to cruise?',
+                          'How many guests?',
+                          'What are you celebrating?',
+                        ][guidedStep]}
+                      </h2>
+                      <p className="mt-2 text-sm text-zinc-400">
+                        {guidedStep === 6
+                          ? 'Check the details before Ariel prepares your itinerary.'
+                          : 'You can change any of these details before asking Ariel to prepare an itinerary.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setGuidedStep(null)}
+                      className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                      aria-label="Close guided planner"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-2" aria-label="Booking steps">
+                    {Array.from({ length: 6 }, (_, index) => (
+                      <span
+                        key={index}
+                        className={`h-1.5 flex-1 rounded-full ${
+                          index < guidedStep ? 'bg-amber-400' : 'bg-zinc-800'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] text-zinc-500">
+                    {guidedStep === 6 ? 'Ready to review' : `Step ${guidedStep + 1} of 6`}
+                  </p>
+
+                  <div className="mt-6">
+                    {guidedStep === 0 && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {(['Goa', 'Mumbai'] as const).map((location) => (
+                          <button
+                            key={location}
+                            type="button"
+                            onClick={() => handleGuidedDetailsChange({ location }, 1)}
+                            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-5 text-left transition hover:border-amber-400/70 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          >
+                            <MapPin className="mb-3 h-5 w-5 text-amber-300" />
+                            <span className="block text-lg font-semibold text-white">{location}</span>
+                            <span className="mt-1 block text-xs text-zinc-400">
+                              {location === 'Goa'
+                                ? 'Beaches, islands, and river routes'
+                                : 'Harbor landmarks and Mandwa cruises'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {guidedStep === 1 && (
+                      <label className="block max-w-sm">
+                        <span className="mb-2 block text-xs font-medium text-zinc-300">Charter date</span>
+                        <input
+                          type="date"
+                          min={new Date().toISOString().slice(0, 10)}
+                          value={guidedDetails.date || ''}
+                          onChange={(event) => {
+                            if (event.target.value) {
+                              handleGuidedDetailsChange({ date: event.target.value }, 2);
+                            }
+                          }}
+                          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-amber-400"
+                        />
+                      </label>
+                    )}
+
+                    {guidedStep === 2 && (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {GUIDED_TIME_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => handleGuidedDetailsChange({ startTime: option.value }, 3)}
+                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          >
+                            <span className="block font-medium">{option.label}</span>
+                            <span className="mt-1 block text-xs text-zinc-500">{option.value}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {guidedStep === 3 && (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {[2, 3, 4, 6].map((hours) => (
+                          <button
+                            key={hours}
+                            type="button"
+                            onClick={() =>
+                              handleGuidedDetailsChange({ durationHours: hours }, 4)
+                            }
+                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-4 text-sm font-medium text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          >
+                            {hours} hours
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {guidedStep === 4 && (
+                      <div>
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                          {[2, 4, 6, 8, 10, 12, 15, 20, 30].map((guests) => (
+                            <button
+                              key={guests}
+                              type="button"
+                              onClick={() => handleGuidedDetailsChange({ guests }, 5)}
+                              className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm font-medium text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                            >
+                              {guests}
+                            </button>
+                          ))}
+                        </div>
+                        <label className="mt-4 block max-w-xs">
+                          <span className="mb-2 block text-xs font-medium text-zinc-400">
+                            Or enter a custom guest count
+                          </span>
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={customGuestCount}
+                              onChange={(event) => setCustomGuestCount(event.target.value)}
+                              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                            />
+                            <button
+                              type="button"
+                              disabled={
+                                !customGuestCount ||
+                                Number(customGuestCount) < 1 ||
+                                Number(customGuestCount) > 100
+                              }
+                              onClick={() =>
+                                handleGuidedDetailsChange({ guests: Number(customGuestCount) }, 5)
+                              }
+                              className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Continue
+                            </button>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {guidedStep === 5 && (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {GUIDED_OCCASION_OPTIONS.map((occasion) => (
+                          <button
+                            key={occasion}
+                            type="button"
+                            onClick={() => handleGuidedDetailsChange({ occasion }, 6)}
+                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          >
+                            {occasion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {guidedStep === 6 && (
+                      <div>
+                        <dl className="divide-y divide-zinc-800 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4">
+                          {[
+                            ['Location', guidedDetails.location, 0],
+                            [
+                              'Date',
+                              guidedDetails.date
+                                ? new Date(`${guidedDetails.date}T12:00:00`).toLocaleDateString(
+                                    'en-US',
+                                    { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }
+                                  )
+                                : undefined,
+                              1,
+                            ],
+                            [
+                              'Departure',
+                              GUIDED_TIME_OPTIONS.find((option) => option.value === guidedDetails.startTime)
+                                ? `${GUIDED_TIME_OPTIONS.find((option) => option.value === guidedDetails.startTime)?.label} (${guidedDetails.startTime})`
+                                : undefined,
+                              2,
+                            ],
+                            ['Duration', guidedDetails.durationHours ? `${guidedDetails.durationHours} hours` : undefined, 3],
+                            ['Guests', guidedDetails.guests ? `${guidedDetails.guests} guests` : undefined, 4],
+                            ['Occasion', guidedDetails.occasion, 5],
+                          ].map(([label, value, step]) => (
+                            <div key={label} className="flex items-center justify-between gap-3 py-3">
+                              <dt className="text-xs text-zinc-400">{label}</dt>
+                              <dd className="flex items-center gap-3 text-right text-sm font-medium text-white">
+                                {value || 'Not set'}
+                                <button
+                                  type="button"
+                                  onClick={() => setGuidedStep(Number(step))}
+                                  className="text-xs font-medium text-amber-300 hover:text-amber-200"
+                                >
+                                  Edit
+                                </button>
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                        <button
+                          type="button"
+                          onClick={handleGenerateGuidedItinerary}
+                          disabled={isLoading}
+                          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:brightness-110 disabled:opacity-60"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Ask Ariel to prepare my itinerary
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between border-t border-zinc-800 pt-4">
+                    {guidedStep > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setGuidedStep(guidedStep === 6 ? 5 : guidedStep - 1)}
+                        className="text-xs font-medium text-zinc-400 transition hover:text-white"
+                      >
+                        Back
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    <p className="text-[11px] text-zinc-500">You can also just chat with Ariel below.</p>
+                  </div>
+                </div>
+              </section>
+            ) : (
+            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-center py-6 sm:py-10">
+              <div className="mb-7 text-center">
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Private yacht charters · Goa & Mumbai
+                </span>
+                <h2 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  Where will the water take you?
+                </h2>
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400 sm:text-base">
+                  Pick a coast to start planning. Ariel will help you find the right yacht, route, and
+                  experience.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleWelcomePrompt(
+                      'I’m planning a yacht charter in Goa for 8 guests. Help me choose a route and experience.'
+                    )
+                  }
+                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 bg-cover bg-center p-5 text-left shadow-lg transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:shadow-amber-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:min-h-60"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(180deg, rgba(9,9,11,0.02) 10%, rgba(9,9,11,0.28) 42%, rgba(9,9,11,0.96) 100%), url('/yachts/black_diamond/exterior.jpg')",
+                  }}
+                >
+                  <span className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Goa
+                  </span>
+                  <span className="text-xl font-semibold text-white">Golden-hour escapes</span>
+                  <span className="mt-1 text-xs text-zinc-300">
+                    Quiet coves, island routes, and open-water sunsets
+                  </span>
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-amber-200">
+                    Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleWelcomePrompt(
+                      'I’m planning a yacht charter in Mumbai for 8 guests. Help me choose a route and experience.'
+                    )
+                  }
+                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 bg-cover bg-center p-5 text-left shadow-lg transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:shadow-amber-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:min-h-60"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(180deg, rgba(9,9,11,0.02) 10%, rgba(9,9,11,0.28) 42%, rgba(9,9,11,0.96) 100%), url('/yachts/azure_voyager/exterior.jpg')",
+                  }}
+                >
+                  <span className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Mumbai
+                  </span>
+                  <span className="text-xl font-semibold text-white">The city, from the sea</span>
+                  <span className="mt-1 text-xs text-zinc-300">
+                    Harbor landmarks, Mandwa cruises, and celebrations afloat
+                  </span>
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-amber-200">
+                    Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
+                  </span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setGuidedDetails({});
+                  setCustomGuestCount('');
+                  setGuidedStep(0);
+                }}
+                className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/5 px-4 py-2.5 text-xs font-semibold text-amber-200 transition hover:border-amber-300/60 hover:bg-amber-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              >
+                <Calendar className="h-4 w-4" />
+                Plan step by step
+              </button>
+
+              <div className="mt-6">
+                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                  Or try a sample voyage
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {QUICK_PROMPTS.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => handleWelcomePrompt(item.prompt)}
+                      className="rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs text-zinc-300 transition hover:border-amber-500/40 hover:bg-zinc-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+            )
+          ) : (
           <div className="mx-auto max-w-4xl space-y-6">
             {messages.map((message) => {
               const isUser = message.sender === 'user';
@@ -810,6 +1243,31 @@ export default function YachtConciergeApp() {
               );
             })}
 
+            {chatError?.sessionId === activeSessionId && (
+              <div
+                className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-950/30 p-4 text-sm text-red-100"
+                role="alert"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                <div className="flex-1">
+                  <p>Ariel couldn’t send a reply. Your message is still here.</p>
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage(chatError.query, true)}
+                    disabled={isLoading}
+                    className="mt-2 inline-flex items-center gap-1.5 font-semibold text-red-200 underline-offset-2 hover:underline disabled:opacity-60"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RotateCw className="h-3.5 w-3.5" />
+                    )}
+                    Retry message
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 1. Live Activity Trace Pill (Green pulsating indicator + live step icon) */}
             {isLoading && currentTrace && (
               <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -840,28 +1298,8 @@ export default function YachtConciergeApp() {
 
             <div ref={messagesEndRef} />
           </div>
+          )}
         </div>
-
-        {/* Quick Prompts (If chat is fresh) */}
-        {messages.length <= 1 && (
-          <div className="border-t border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
-            <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mr-1">
-                Suggested Voyages:
-              </span>
-              {QUICK_PROMPTS.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSendMessage(item.prompt)}
-                  className="rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs text-zinc-300 transition hover:border-amber-500/40 hover:bg-zinc-800 hover:text-white"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Input Bar */}
         <div className="border-t border-zinc-800/80 bg-zinc-950/80 p-4 md:p-5 backdrop-blur-md">
@@ -873,6 +1311,7 @@ export default function YachtConciergeApp() {
             className="mx-auto flex max-w-4xl items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 px-4 py-2.5 shadow-lg focus-within:border-amber-500/60 transition"
           >
             <input
+              ref={inputRef}
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
