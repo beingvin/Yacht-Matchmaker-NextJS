@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
-import { runYachtConcierge } from '@/lib/agent/graph';
+import { runYachtConcierge } from '@/lib/agent/agent';
 import {
   getAllSessions,
   getSession,
