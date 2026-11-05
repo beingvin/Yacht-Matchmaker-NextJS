@@ -115,9 +115,9 @@ const getPersistentUserId = (): string => {
 const renderTraceIcon = (iconName?: string) => {
   switch (iconName) {
     case 'ship':
-      return <Ship className="h-4 w-4 animate-bounce text-amber-500" />;
+      return <Ship className="h-4 w-4 animate-bounce text-[#d4d4d8]" />;
     case 'compass':
-      return <Compass className="h-4 w-4 animate-spin text-sky-500" />;
+      return <Compass className="h-4 w-4 animate-spin text-[#d4d4d8]" />;
     case 'receipt':
       return <Receipt className="h-4 w-4 text-emerald-500" />;
     case 'document':
@@ -127,7 +127,7 @@ const renderTraceIcon = (iconName?: string) => {
       return <ShieldCheck className="h-4 w-4 text-teal-500" />;
     case 'sparkles':
     default:
-      return <Sparkles className="h-4 w-4 animate-pulse text-amber-400" />;
+      return <Sparkles className="h-4 w-4 animate-pulse text-[#d4d4d8]" />;
   }
 };
 
@@ -221,15 +221,16 @@ export default function YachtConciergeApp() {
 
   useEffect(() => {
     const desktopQuery = window.matchMedia('(min-width: 768px)');
-    const closeOnMobile = () => {
-      if (!desktopQuery.matches) {
-        setIsSidebarOpen(false);
+    let wasDesktop = desktopQuery.matches;
+    const syncSidebarToViewport = () => {
+      if (desktopQuery.matches !== wasDesktop) {
+        wasDesktop = desktopQuery.matches;
+        setIsSidebarOpen(wasDesktop);
       }
     };
 
-    closeOnMobile();
-    desktopQuery.addEventListener('change', closeOnMobile);
-    return () => desktopQuery.removeEventListener('change', closeOnMobile);
+    window.addEventListener('resize', syncSidebarToViewport);
+    return () => window.removeEventListener('resize', syncSidebarToViewport);
   }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -601,7 +602,7 @@ export default function YachtConciergeApp() {
   };
 
   return (
-    <div className="flex h-[100dvh] min-w-0 overflow-hidden bg-zinc-950 font-sans text-zinc-100 antialiased">
+    <div className="flex h-[100dvh] min-w-0 overflow-hidden bg-[#1c1c1f] font-sans text-[#e7e7e9] antialiased">
       {/* Lightbox Modal */}
       {lightboxImage && (
         <div
@@ -659,32 +660,32 @@ export default function YachtConciergeApp() {
       />
 
       {/* Main Chat Workspace */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-zinc-900/90">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#1c1c1f]">
         {/* Top Navbar */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/70 px-3 backdrop-blur-md sm:px-5">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#34343a] bg-[#202024] px-3 sm:px-5">
           <div className="flex items-center gap-3">
             {!isSidebarOpen && (
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(true)}
-                className="rounded-xl border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition hover:bg-zinc-800"
+                className="rounded-lg border border-[#34343a] bg-[#27272c] p-2 text-[#a2a2ab] transition hover:bg-[#303036] hover:text-white"
                 title="Expand sidebar"
               >
                 <PanelLeftOpen className="h-4 w-4" />
               </button>
             )}
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 shadow-md">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#19191c] shadow-sm">
                 <Anchor className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+                <h1 className="flex items-center gap-2 text-[13px] font-semibold tracking-tight text-[#ededf0]">
                   <span>Ariel</span>
-                  <span className="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium text-amber-300 border border-amber-400/20">
+                  <span className="rounded-md border border-[#45454c] bg-[#303036] px-1.5 py-0.5 text-[9px] font-medium text-[#d4d4d8]">
                     Luxury Concierge
                   </span>
                 </h1>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[10px] text-[#92929b]">
                   Private Charter Itinerary & Flotilla Advisor
                 </p>
               </div>
@@ -692,8 +693,8 @@ export default function YachtConciergeApp() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1 text-xs text-zinc-300">
-              <MapPin className="h-3.5 w-3.5 text-amber-300" />
+            <div className="hidden items-center gap-1.5 rounded-md border border-[#34343a] bg-[#252529] px-2.5 py-1 text-xs text-[#a2a2ab] sm:flex">
+              <MapPin className="h-3.5 w-3.5 text-[#d4d4d8]" />
               <span className="text-[11px] font-medium">Serving Goa & Mumbai</span>
             </div>
           </div>
@@ -704,13 +705,13 @@ export default function YachtConciergeApp() {
           {messages.length <= 1 ? (
             guidedStep !== null ? (
               <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-start py-2 sm:justify-center sm:py-10">
-                <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-2xl sm:p-8">
+                <div className="rounded-2xl border border-[#38383e] bg-[#222226] p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#d4d4d8]">
                         Your charter, step by step
                       </p>
-                      <h2 className="mt-2 text-2xl font-semibold text-white">
+                      <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#ededf0]">
                         {guidedStep === 6 ? 'Review your trip' : [
                           'Choose your coast',
                           'Pick a date',
@@ -720,7 +721,7 @@ export default function YachtConciergeApp() {
                           'What are you celebrating?',
                         ][guidedStep]}
                       </h2>
-                      <p className="mt-2 text-sm text-zinc-400">
+                      <p className="mt-2 text-sm text-[#a2a2ab]">
                         {guidedStep === 6
                           ? 'Check the details before Ariel prepares your itinerary.'
                           : 'You can change any of these details before asking Ariel to prepare an itinerary.'}
@@ -729,7 +730,7 @@ export default function YachtConciergeApp() {
                     <button
                       type="button"
                       onClick={() => setGuidedStep(null)}
-                      className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+                      className="rounded-md p-2 text-[#777780] transition hover:bg-[#303036] hover:text-white"
                       aria-label="Close guided planner"
                     >
                       <X className="h-4 w-4" />
@@ -741,12 +742,12 @@ export default function YachtConciergeApp() {
                       <span
                         key={index}
                         className={`h-1.5 flex-1 rounded-full ${
-                          index < guidedStep ? 'bg-amber-400' : 'bg-zinc-800'
+                          index < guidedStep ? 'bg-white' : 'bg-[#3b3b42]'
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="mt-2 text-[11px] text-zinc-500">
+                  <p className="mt-2 text-[11px] text-[#777780]">
                     {guidedStep === 6 ? 'Ready to review' : `Step ${guidedStep + 1} of 6`}
                   </p>
 
@@ -758,11 +759,11 @@ export default function YachtConciergeApp() {
                             key={location}
                             type="button"
                             onClick={() => handleGuidedDetailsChange({ location }, 1)}
-                            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-5 text-left transition hover:border-amber-400/70 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                            className="rounded-xl border border-[#38383e] bg-[#252529] px-4 py-4 text-left transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                           >
-                            <MapPin className="mb-3 h-5 w-5 text-amber-300" />
-                            <span className="block text-lg font-semibold text-white">{location}</span>
-                            <span className="mt-1 block text-xs text-zinc-400">
+                            <MapPin className="mb-3 h-5 w-5 text-[#d4d4d8]" />
+                            <span className="block text-base font-semibold text-[#ededf0]">{location}</span>
+                            <span className="mt-1 block text-xs text-[#92929b]">
                               {location === 'Goa'
                                 ? 'Beaches, islands, and river routes'
                                 : 'Harbor landmarks and Mandwa cruises'}
@@ -774,7 +775,7 @@ export default function YachtConciergeApp() {
 
                     {guidedStep === 1 && (
                       <label className="block max-w-sm">
-                        <span className="mb-2 block text-xs font-medium text-zinc-300">Charter date</span>
+                        <span className="mb-2 block text-xs font-medium text-[#a2a2ab]">Charter date</span>
                         <input
                           type="date"
                           min={new Date().toISOString().slice(0, 10)}
@@ -784,7 +785,7 @@ export default function YachtConciergeApp() {
                               handleGuidedDetailsChange({ date: event.target.value }, 2);
                             }
                           }}
-                          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-amber-400"
+                          className="w-full rounded-lg border border-[#3b3b42] bg-[#202024] px-3 py-2.5 text-sm text-[#e7e7e9] outline-none focus:border-white"
                         />
                       </label>
                     )}
@@ -796,10 +797,10 @@ export default function YachtConciergeApp() {
                             key={option.value}
                             type="button"
                             onClick={() => handleGuidedDetailsChange({ startTime: option.value }, 3)}
-                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                            className="rounded-lg border border-[#38383e] bg-[#252529] px-3 py-3 text-sm text-[#c5c5cc] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                           >
                             <span className="block font-medium">{option.label}</span>
-                            <span className="mt-1 block text-xs text-zinc-500">{option.value}</span>
+                            <span className="mt-1 block text-xs text-[#777780]">{option.value}</span>
                           </button>
                         ))}
                       </div>
@@ -814,7 +815,7 @@ export default function YachtConciergeApp() {
                             onClick={() =>
                               handleGuidedDetailsChange({ durationHours: hours }, 4)
                             }
-                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-4 text-sm font-medium text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                            className="rounded-lg border border-[#38383e] bg-[#252529] px-3 py-3 text-sm font-medium text-[#c5c5cc] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                           >
                             {hours} hours
                           </button>
@@ -830,14 +831,14 @@ export default function YachtConciergeApp() {
                               key={guests}
                               type="button"
                               onClick={() => handleGuidedDetailsChange({ guests }, 5)}
-                              className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm font-medium text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                              className="rounded-lg border border-[#38383e] bg-[#252529] px-3 py-3 text-sm font-medium text-[#c5c5cc] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                             >
                               {guests}
                             </button>
                           ))}
                         </div>
                         <label className="mt-4 block max-w-xs">
-                          <span className="mb-2 block text-xs font-medium text-zinc-400">
+                          <span className="mb-2 block text-xs font-medium text-[#92929b]">
                             Or enter a custom guest count
                           </span>
                           <div className="flex gap-2">
@@ -847,7 +848,7 @@ export default function YachtConciergeApp() {
                               max="100"
                               value={customGuestCount}
                               onChange={(event) => setCustomGuestCount(event.target.value)}
-                              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-400"
+                              className="w-full rounded-lg border border-[#3b3b42] bg-[#202024] px-3 py-2 text-sm text-[#e7e7e9] outline-none focus:border-white"
                             />
                             <button
                               type="button"
@@ -859,7 +860,7 @@ export default function YachtConciergeApp() {
                               onClick={() =>
                                 handleGuidedDetailsChange({ guests: Number(customGuestCount) }, 5)
                               }
-                              className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#19191c] transition hover:bg-[#e7e7e9] disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               Continue
                             </button>
@@ -875,7 +876,7 @@ export default function YachtConciergeApp() {
                             key={occasion}
                             type="button"
                             onClick={() => handleGuidedDetailsChange({ occasion }, 6)}
-                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm text-zinc-200 transition hover:border-amber-400/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                            className="rounded-lg border border-[#38383e] bg-[#252529] px-3 py-3 text-sm text-[#c5c5cc] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                           >
                             {occasion}
                           </button>
@@ -885,7 +886,7 @@ export default function YachtConciergeApp() {
 
                     {guidedStep === 6 && (
                       <div>
-                        <dl className="divide-y divide-zinc-800 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4">
+                        <dl className="divide-y divide-[#38383e] rounded-xl border border-[#38383e] bg-[#252529] px-4">
                           {[
                             ['Location', guidedDetails.location, 0],
                             [
@@ -910,13 +911,13 @@ export default function YachtConciergeApp() {
                             ['Occasion', guidedDetails.occasion, 5],
                           ].map(([label, value, step]) => (
                             <div key={label} className="flex items-center justify-between gap-3 py-3">
-                              <dt className="text-xs text-zinc-400">{label}</dt>
-                              <dd className="flex items-center gap-3 text-right text-sm font-medium text-white">
+                              <dt className="text-xs text-[#92929b]">{label}</dt>
+                              <dd className="flex items-center gap-3 text-right text-sm font-medium text-[#e7e7e9]">
                                 {value || 'Not set'}
                                 <button
                                   type="button"
                                   onClick={() => setGuidedStep(Number(step))}
-                                  className="text-xs font-medium text-amber-300 hover:text-amber-200"
+                                  className="text-xs font-medium text-[#e7e7e9] hover:text-white"
                                 >
                                   Edit
                                 </button>
@@ -928,7 +929,7 @@ export default function YachtConciergeApp() {
                           type="button"
                           onClick={handleGenerateGuidedItinerary}
                           disabled={isLoading}
-                          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:brightness-110 disabled:opacity-60"
+                          className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#19191c] transition hover:bg-[#e7e7e9] disabled:opacity-60"
                         >
                           <Sparkles className="h-4 w-4" />
                           Ask Ariel to prepare my itinerary
@@ -937,33 +938,33 @@ export default function YachtConciergeApp() {
                     )}
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between border-t border-zinc-800 pt-4">
+                  <div className="mt-6 flex items-center justify-between border-t border-[#38383e] pt-4">
                     {guidedStep > 0 ? (
                       <button
                         type="button"
                         onClick={() => setGuidedStep(guidedStep === 6 ? 5 : guidedStep - 1)}
-                        className="text-xs font-medium text-zinc-400 transition hover:text-white"
+                        className="text-xs font-medium text-[#92929b] transition hover:text-[#e7e7e9]"
                       >
                         Back
                       </button>
                     ) : (
                       <span />
                     )}
-                    <p className="text-[11px] text-zinc-500">You can also just chat with Ariel below.</p>
+                    <p className="text-[11px] text-[#777780]">You can also just chat with Ariel below.</p>
                   </div>
                 </div>
               </section>
             ) : (
-            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-start py-4 sm:justify-center sm:py-10">
+            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-start py-4 sm:justify-center sm:py-8">
               <div className="mb-7 text-center">
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                <span className="inline-flex items-center gap-2 rounded-md border border-[#45454c] bg-[#303036] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#d4d4d8]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Private yacht charters · Goa & Mumbai
                 </span>
-                <h2 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-[#ededf0] sm:text-3xl">
                   Where will the water take you?
                 </h2>
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400 sm:text-base">
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#a2a2ab]">
                   Pick a coast to start planning. Ariel will help you find the right yacht, route, and
                   experience.
                 </p>
@@ -977,21 +978,21 @@ export default function YachtConciergeApp() {
                       'I’m planning a yacht charter in Goa for 8 guests. Help me choose a route and experience.'
                     )
                   }
-                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 bg-cover bg-center p-5 text-left shadow-lg transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:shadow-amber-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:min-h-60"
+                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-xl border border-white/10 bg-slate-300 bg-cover bg-center p-4 text-left shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-56"
                   style={{
                     backgroundImage:
-                      "linear-gradient(180deg, rgba(9,9,11,0.02) 10%, rgba(9,9,11,0.28) 42%, rgba(9,9,11,0.96) 100%), url('/yachts/black_diamond/exterior.jpg')",
+                      "linear-gradient(180deg, rgba(15,15,20,0.04) 10%, rgba(15,15,20,0.28) 42%, rgba(15,15,20,0.88) 100%), url('/yachts/black_diamond/exterior.jpg')",
                   }}
                 >
-                  <span className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                  <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85">
                     <MapPin className="h-3.5 w-3.5" />
                     Goa
                   </span>
-                  <span className="text-xl font-semibold text-white">Golden-hour escapes</span>
-                  <span className="mt-1 text-xs text-zinc-300">
+                  <span className="text-lg font-semibold text-white">Golden-hour escapes</span>
+                  <span className="mt-1 text-xs text-white/85">
                     Quiet coves, island routes, and open-water sunsets
                   </span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-amber-200">
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-white/80">
                     Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
                   </span>
                 </button>
@@ -1003,21 +1004,21 @@ export default function YachtConciergeApp() {
                       'I’m planning a yacht charter in Mumbai for 8 guests. Help me choose a route and experience.'
                     )
                   }
-                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 bg-cover bg-center p-5 text-left shadow-lg transition hover:-translate-y-0.5 hover:border-amber-400/50 hover:shadow-amber-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:min-h-60"
+                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-xl border border-white/10 bg-slate-300 bg-cover bg-center p-4 text-left shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-56"
                   style={{
                     backgroundImage:
-                      "linear-gradient(180deg, rgba(9,9,11,0.02) 10%, rgba(9,9,11,0.28) 42%, rgba(9,9,11,0.96) 100%), url('/yachts/azure_voyager/exterior.jpg')",
+                      "linear-gradient(180deg, rgba(15,15,20,0.04) 10%, rgba(15,15,20,0.28) 42%, rgba(15,15,20,0.88) 100%), url('/yachts/azure_voyager/exterior.jpg')",
                   }}
                 >
-                  <span className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                  <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85">
                     <MapPin className="h-3.5 w-3.5" />
                     Mumbai
                   </span>
-                  <span className="text-xl font-semibold text-white">The city, from the sea</span>
-                  <span className="mt-1 text-xs text-zinc-300">
+                  <span className="text-lg font-semibold text-white">The city, from the sea</span>
+                  <span className="mt-1 text-xs text-white/85">
                     Harbor landmarks, Mandwa cruises, and celebrations afloat
                   </span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-amber-200">
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-white/80">
                     Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
                   </span>
                 </button>
@@ -1030,14 +1031,14 @@ export default function YachtConciergeApp() {
                   setCustomGuestCount('');
                   setGuidedStep(0);
                 }}
-                className="mx-auto mt-5 inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/5 px-4 py-2.5 text-xs font-semibold text-amber-200 transition hover:border-amber-300/60 hover:bg-amber-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="mx-auto mt-5 inline-flex items-center gap-2 rounded-lg border border-[#3b3b42] bg-[#252529] px-3.5 py-2 text-xs font-medium text-[#c5c5cc] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <Calendar className="h-4 w-4" />
                 Plan step by step
               </button>
 
               <div className="mt-6">
-                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777780]">
                   Or try a sample voyage
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -1046,7 +1047,7 @@ export default function YachtConciergeApp() {
                       key={item.label}
                       type="button"
                       onClick={() => handleWelcomePrompt(item.prompt)}
-                      className="rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs text-zinc-300 transition hover:border-amber-500/40 hover:bg-zinc-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                      className="rounded-md border border-[#38383e] bg-[#252529] px-3 py-1.5 text-xs text-[#a2a2ab] transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                     >
                       {item.label}
                     </button>
@@ -1056,22 +1057,36 @@ export default function YachtConciergeApp() {
             </section>
             )
           ) : (
-          <div className="mx-auto max-w-4xl space-y-6">
+          <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
             {messages.map((message) => {
               const isUser = message.sender === 'user';
               const itineraryMeta = !isUser ? parseItineraryMeta(message.text) : null;
               const photos = !isUser ? extractPhotos(message.text) : [];
-              const cleanText = !isUser
-                ? formatMarkdownTables(
-                    message.text
-                      .replace(
-                        /(?:^|\r?\n)#{1,6}\s*[^\r\n]*(?:yacht\s+photos?|vessel\s+photo\s+gallery)[^\r\n]*(?:\r?\n|$)[\s\S]*$/i,
-                        ''
-                      )
-                      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-                      .trim()
+              let cleanText = message.text;
+              if (!isUser) {
+                cleanText = cleanText
+                  .replace(
+                    /(?:^|\r?\n)#{1,6}\s*[^\r\n]*(?:yacht\s+photos?|vessel\s+photo\s+gallery)[^\r\n]*(?:\r?\n|$)[\s\S]*$/i,
+                    ''
                   )
-                : message.text;
+                  .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+                if (itineraryMeta) {
+                  cleanText = cleanText.replace(
+                    /(?:^|\r?\n)#{1,6}\s*Booking Summary\s*\r?\n(?:[-*]\s+\*\*[^*\r\n]+:\*\*[^\r\n]*(?:\r?\n|$))+/i,
+                    '\n'
+                  );
+                }
+                cleanText = formatMarkdownTables(cleanText.trim());
+              }
+              const tripDetails = itineraryMeta
+                ? [
+                    { label: 'Destination', value: itineraryMeta.location || '', Icon: MapPin },
+                    { label: 'Date', value: itineraryMeta.date || '', Icon: Calendar },
+                    { label: 'Departure', value: itineraryMeta.time || '', Icon: Clock },
+                    { label: 'Duration', value: itineraryMeta.duration || '', Icon: Timer },
+                    { label: 'Guests', value: itineraryMeta.guests || '', Icon: Users },
+                  ].filter((detail) => detail.value)
+                : [];
 
               return (
                 <div
@@ -1079,29 +1094,30 @@ export default function YachtConciergeApp() {
                   className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in duration-300`}
                 >
                   <div
-                    className={`relative max-w-3xl rounded-2xl p-5 md:p-6 transition-all ${
+                    className={`relative min-w-0 break-words rounded-2xl p-4 transition-all sm:p-5 md:p-6 ${
                       isUser
-                        ? 'bg-amber-500 text-zinc-950 font-medium shadow-lg'
-                        : 'border border-zinc-800/90 bg-zinc-950/80 text-zinc-200 shadow-xl'
+                        ? 'ml-auto w-fit max-w-[min(88%,44rem)] rounded-xl rounded-br-md bg-[#303036] font-medium text-white'
+                        : 'w-full max-w-3xl border border-[#34343a] bg-[#222226] text-[#c5c5cc]'
                     }`}
                   >
                     {/* Header info for agent messages */}
                     {!isUser && (
-                      <div className="mb-3 flex items-center justify-between border-b border-zinc-800/60 pb-2.5">
+                      <div className="mb-3 flex items-center justify-between border-b border-[#38383e] pb-2.5">
                         <div className="flex items-center gap-2">
-                          <Ship className="h-4 w-4 text-amber-400" />
-                          <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                          <Ship className="h-4 w-4 text-[#d4d4d8]" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#d4d4d8]">
                             Ariel • Charter Concierge
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleCopyText(message.id, message.text)}
-                          className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition"
+                          className="rounded-md p-1 text-[#777780] transition hover:bg-[#303036] hover:text-white"
                           title="Copy message"
+                          aria-label={copiedId === message.id ? 'Message copied' : 'Copy message'}
                         >
                           {copiedId === message.id ? (
-                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
                           ) : (
                             <Copy className="h-3.5 w-3.5" />
                           )}
@@ -1109,76 +1125,106 @@ export default function YachtConciergeApp() {
                       </div>
                     )}
 
-                    {/* 2. Itinerary Badges (Location, Date, Time, Duration, Guests) */}
+                    {/* Charter details */}
                     {itineraryMeta && (
-                      <div className="mb-5 flex flex-wrap gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-                        {itineraryMeta.location && (
-                          <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-amber-300 border border-amber-500/20">
-                            <MapPin className="h-3.5 w-3.5 text-amber-400" />
-                            <span>{itineraryMeta.location}</span>
-                          </div>
-                        )}
-                        {itineraryMeta.date && (
-                          <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-amber-300 border border-amber-500/20">
-                            <Calendar className="h-3.5 w-3.5 text-amber-400" />
-                            <span>{itineraryMeta.date}</span>
-                          </div>
-                        )}
-                        {itineraryMeta.time && (
-                          <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-amber-300 border border-amber-500/20">
-                            <Clock className="h-3.5 w-3.5 text-amber-400" />
-                            <span>{itineraryMeta.time}</span>
-                          </div>
-                        )}
-                        {itineraryMeta.duration && (
-                          <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-amber-300 border border-amber-500/20">
-                            <Timer className="h-3.5 w-3.5 text-amber-400" />
-                            <span>{itineraryMeta.duration}</span>
-                          </div>
-                        )}
-                        {itineraryMeta.guests && (
-                          <div className="flex items-center gap-1.5 rounded-lg bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-amber-300 border border-amber-500/20">
-                            <Users className="h-3.5 w-3.5 text-amber-400" />
-                            <span>{itineraryMeta.guests}</span>
-                          </div>
-                        )}
+                      <div className="mb-5 overflow-hidden rounded-lg border border-[#38383e] bg-[#252529]">
+                        <div className="border-b border-[#38383e] bg-[#29292e] px-3 py-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[#92929b]">
+                            Charter details
+                          </span>
+                        </div>
+                        <dl
+                          className="grid gap-px bg-[#38383e]"
+                          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))' }}
+                        >
+                          {tripDetails.map(({ label, value, Icon }) => (
+                            <div key={label} className="min-w-0 bg-[#252529] px-3 py-3">
+                              <dt className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#92929b]">
+                                <Icon className="h-3.5 w-3.5 text-[#d4d4d8]" />
+                                {label}
+                              </dt>
+                              <dd className="mt-1 break-words text-sm font-semibold text-[#e7e7e9]">
+                                {value}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
                       </div>
                     )}
 
                     {/* Markdown Body */}
                     <div
-                      className={`prose prose-invert max-w-none text-sm leading-relaxed ${
-                        isUser ? 'prose-p:text-zinc-950 font-medium' : 'text-zinc-200'
+                      className={`max-w-none text-sm leading-6 ${
+                        isUser ? 'font-medium text-white' : 'text-[#c5c5cc]'
                       }`}
                     >
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           table: ({ node, ...props }) => (
-                            <div className="my-5 w-full overflow-x-auto rounded-xl border border-zinc-800/90 bg-zinc-950/70 shadow-lg backdrop-blur-sm">
+                            <div
+                              role="region"
+                              aria-label="Scrollable itinerary table"
+                              tabIndex={0}
+                              className="my-5 w-full overflow-x-auto overscroll-x-contain rounded-lg border border-[#38383e] bg-[#252529] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                            >
                               <table className="w-full min-w-[480px] border-collapse text-left text-sm" {...props} />
                             </div>
                           ),
                           thead: ({ node, ...props }) => (
-                            <thead className="border-b border-zinc-800 bg-zinc-900/90 text-xs font-semibold uppercase tracking-wider text-amber-300" {...props} />
+                            <thead className="border-b border-[#38383e] bg-[#29292e] text-xs font-semibold uppercase tracking-wider text-[#e7e7e9]" {...props} />
                           ),
                           tbody: ({ node, ...props }) => (
-                            <tbody className="divide-y divide-zinc-800/60 font-normal text-zinc-200" {...props} />
+                            <tbody className="divide-y divide-[#38383e] font-normal text-[#c5c5cc]" {...props} />
                           ),
                           tr: ({ node, ...props }) => (
-                            <tr className="transition-colors hover:bg-zinc-800/40" {...props} />
+                            <tr className="transition-colors hover:bg-[#2c2c32]" {...props} />
                           ),
                           th: ({ node, ...props }) => (
-                            <th className="px-4 py-3 font-semibold text-amber-300 border-b border-zinc-800" {...props} />
+                            <th scope="col" className="border-b border-[#38383e] px-4 py-3 font-semibold text-[#e7e7e9]" {...props} />
                           ),
                           td: ({ node, ...props }) => (
-                            <td className="px-4 py-3 text-zinc-300" {...props} />
+                            <td className="px-4 py-3 text-[#b0b0b8]" {...props} />
                           ),
                           h3: ({ node, ...props }) => (
-                            <h3 className="mt-4 mb-2 text-base font-bold text-amber-300" {...props} />
+                            <h3 className="mt-5 mb-2 text-base font-semibold text-[#ededf0]" {...props} />
                           ),
                           h4: ({ node, ...props }) => (
-                            <h4 className="mt-4 mb-2 text-sm font-semibold text-zinc-100 flex items-center gap-2" {...props} />
+                            <h4 className="mt-4 mb-2 flex items-center gap-2 text-sm font-semibold text-[#e7e7e9]" {...props} />
+                          ),
+                          h1: ({ node, ...props }) => (
+                            <h1 className="mb-3 text-xl font-semibold tracking-tight text-[#ededf0]" {...props} />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h2 className="mt-5 mb-2 text-lg font-semibold tracking-tight text-[#ededf0]" {...props} />
+                          ),
+                          p: ({ node, ...props }) => (
+                            <p className="mb-3 last:mb-0" {...props} />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul className="my-3 list-disc space-y-1.5 pl-5 marker:text-[#d4d4d8]" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="my-3 list-decimal space-y-1.5 pl-5 marker:font-semibold marker:text-[#e7e7e9]" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="ps-1" {...props} />
+                          ),
+                          strong: ({ node, ...props }) => (
+                            <strong className={isUser ? 'font-semibold' : 'font-semibold text-[#ededf0]'} {...props} />
+                          ),
+                          blockquote: ({ node, ...props }) => (
+                            <blockquote className="my-4 border-l-2 border-[#777780] pl-4 text-[#a2a2ab]" {...props} />
+                          ),
+                          a: ({ node, ...props }) => (
+                            <a className="font-medium text-[#e7e7e9] underline decoration-[#777780] underline-offset-2 hover:text-white" {...props} />
+                          ),
+                          hr: () => <hr className="my-5 border-[#38383e]" />,
+                          code: ({ node, ...props }) => (
+                            <code className="rounded bg-[#f1f0e9] px-1.5 py-0.5 font-mono text-[0.9em] text-[#314440]" {...props} />
+                          ),
+                          pre: ({ node, ...props }) => (
+                            <pre className="my-4 overflow-x-auto rounded-lg border border-[#38383e] bg-[#19191c] p-4 text-sm leading-6 text-[#d3d3da]" {...props} />
                           ),
                           img: () => null,
                         }}
@@ -1189,12 +1235,12 @@ export default function YachtConciergeApp() {
 
                     {/* Interactive Charter Confirmation Action */}
                     {!isUser && message.text.includes('Shall I proceed with the itinerary?') && (
-                      <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-zinc-800/80">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#38383e] pt-3">
                         <button
                           type="button"
                           disabled={isLoading}
                           onClick={() => handleSendMessage('Yes, please proceed with the itinerary')}
-                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-xs font-semibold text-zinc-950 shadow-md hover:from-amber-400 hover:to-amber-500 transition cursor-pointer disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-semibold text-[#19191c] transition hover:bg-[#e7e7e9] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
                           <span>Confirm & Generate Itinerary</span>
@@ -1204,13 +1250,13 @@ export default function YachtConciergeApp() {
 
                     {/* 3. Photo Grid & Lightbox (16:10 aspect ratio) */}
                     {photos.length > 0 && (
-                      <div className="mt-6 border-t border-zinc-800/80 pt-4">
+                      <div className="mt-6 border-t border-[#38383e] pt-4">
                         <div className="mb-3 flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-amber-400 uppercase">
+                          <span className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-[#d4d4d8] uppercase">
                             <Camera className="h-3.5 w-3.5" />
                             Vessel Photo Gallery ({photos.length})
                           </span>
-                          <span className="text-[11px] text-zinc-400">
+                          <span className="text-[11px] text-[#777780]">
                             Click to enlarge in HD
                           </span>
                         </div>
@@ -1227,7 +1273,7 @@ export default function YachtConciergeApp() {
                             <div
                               key={idx}
                               onClick={() => setLightboxImage(img.src)}
-                              className="group relative aspect-[16/10] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-md cursor-zoom-in"
+                              className="group relative aspect-[16/10] cursor-zoom-in overflow-hidden rounded-lg border border-[#38383e] bg-[#252529]"
                             >
                               <img
                                 src={img.src}
@@ -1258,17 +1304,17 @@ export default function YachtConciergeApp() {
 
             {chatError?.sessionId === activeSessionId && (
               <div
-                className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-950/30 p-4 text-sm text-red-100"
+                className="flex items-start gap-3 rounded-lg border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200"
                 role="alert"
               >
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
                 <div className="flex-1">
                   <p>Ariel couldn’t send a reply. Your message is still here.</p>
                   <button
                     type="button"
                     onClick={() => handleSendMessage(chatError.query, true)}
                     disabled={isLoading}
-                    className="mt-2 inline-flex items-center gap-1.5 font-semibold text-red-200 underline-offset-2 hover:underline disabled:opacity-60"
+                    className="mt-2 inline-flex items-center gap-1.5 font-semibold text-red-300 underline-offset-2 hover:underline disabled:opacity-60"
                   >
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1284,7 +1330,7 @@ export default function YachtConciergeApp() {
             {/* 1. Live Activity Trace Pill (Green pulsating indicator + live step icon) */}
             {isLoading && currentTrace && (
               <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/40 bg-zinc-950/90 px-4 py-3 shadow-xl backdrop-blur-md">
+                <div className="flex items-center gap-3 rounded-lg border border-[#38383e] bg-[#222226] px-3 py-2.5">
                   {/* Pulsating green indicator */}
                   <span className="relative flex h-3 w-3">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -1292,16 +1338,16 @@ export default function YachtConciergeApp() {
                   </span>
 
                   {/* Live Step Icon */}
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[#38383e] bg-[#29292e]">
                     {renderTraceIcon(currentTrace.icon)}
                   </div>
 
                   {/* Step Label */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#d4d4d8]">
                       Live Multi-Agent Trace • {currentTrace.step}
                     </span>
-                    <span className="text-xs font-medium text-zinc-200">
+                    <span className="text-xs font-medium text-[#c5c5cc]">
                       {currentTrace.label}
                     </span>
                   </div>
@@ -1315,13 +1361,13 @@ export default function YachtConciergeApp() {
         </div>
 
         {/* Input Bar */}
-        <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 md:p-5">
+        <div className="shrink-0 border-t border-[#34343a] bg-[#202024] px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-4 md:p-5">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage(inputMessage);
             }}
-            className="mx-auto flex min-h-12 max-w-4xl items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 px-3 py-2.5 shadow-lg focus-within:border-amber-500/60 transition sm:px-4"
+            className="mx-auto flex min-h-11 max-w-4xl items-center gap-2 rounded-xl border border-[#3b3b42] bg-[#252529] px-3 py-2 transition focus-within:border-white focus-within:ring-2 focus-within:ring-white/20 sm:px-3.5"
           >
             <input
               ref={inputRef}
@@ -1330,23 +1376,23 @@ export default function YachtConciergeApp() {
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Inquire with Ariel (e.g., 'Sunset yacht cruise in Goa for 8 guests on Dec 15')..."
               disabled={isLoading}
-              className="min-w-0 flex-1 bg-transparent text-base text-zinc-100 placeholder-zinc-500 outline-none disabled:opacity-50 sm:text-sm"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#e7e7e9] placeholder-[#777780] outline-none disabled:opacity-50"
             />
 
             <button
               type="submit"
               disabled={isLoading || !inputMessage.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 transition hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#19191c] transition hover:bg-[#e7e7e9] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Send message"
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
               ) : (
                 <ArrowUp className="h-4 w-4 stroke-[2.5]" />
               )}
             </button>
           </form>
-          <p className="mt-2 text-center text-[11px] text-zinc-500">
+          <p className="mt-2 text-center text-[10px] text-[#777780]">
             Ariel curates luxury yacht charters exclusively along the coastlines of Mumbai and Goa.
           </p>
         </div>
