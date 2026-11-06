@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   Receipt,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
   Clock,
   Timer,
@@ -109,7 +111,7 @@ interface ExtendedMessage extends Message {
 }
 
 interface GuidedCharterDetails {
-  location?: 'Goa' | 'Mumbai';
+  location?: 'Andaman' | 'Chennai' | 'Goa' | 'Kochi' | 'Lakshadweep' | 'Mumbai' | 'Pondicherry';
   date?: string;
   startTime?: string;
   durationHours?: number;
@@ -123,6 +125,16 @@ const GUIDED_TIME_OPTIONS = [
   { label: 'Golden hour', value: '16:00' },
   { label: 'Sunset', value: '17:00' },
   { label: 'Evening', value: '19:00' },
+];
+
+const GUIDED_LOCATIONS = [
+  { name: 'Andaman', description: 'Clear waters and island routes' },
+  { name: 'Chennai', description: 'The Coromandel coastline' },
+  { name: 'Goa', description: 'Beaches, islands, and river routes' },
+  { name: 'Kochi', description: 'Harbor views and coastal cruises' },
+  { name: 'Lakshadweep', description: 'Turquoise lagoons and island scenery' },
+  { name: 'Mumbai', description: 'Harbor landmarks and Mandwa cruises' },
+  { name: 'Pondicherry', description: 'Relaxed cruises along the east coast' },
 ];
 
 const GUIDED_OCCASION_OPTIONS = [
@@ -278,6 +290,7 @@ export default function YachtConciergeApp() {
   }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const guidedLocationsRef = useRef<HTMLDivElement>(null);
 
   // Initialize guest profile and restore sessions
   // This state must be initialized from browser storage after hydration to avoid server/client mismatches.
@@ -721,7 +734,7 @@ export default function YachtConciergeApp() {
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4 sm:py-6 md:px-8 scrollbar-thin">
           {messages.length <= 1 ? (
             guidedStep !== null ? (
-              <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-start py-2 sm:justify-center sm:py-10">
+              <section className="mx-auto flex min-h-full max-w-2xl flex-col justify-center py-3 sm:py-10">
                 <div className="rounded-2xl border border-[#38383e] bg-[#222226] p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -770,23 +783,52 @@ export default function YachtConciergeApp() {
 
                   <div className="mt-6">
                     {guidedStep === 0 && (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {(['Goa', 'Mumbai'] as const).map((location) => (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            guidedLocationsRef.current?.scrollBy({
+                              left: -guidedLocationsRef.current.clientWidth,
+                              behavior: 'smooth',
+                            })
+                          }
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#38383e] bg-[#252529] text-[#c5c5cc] transition hover:bg-[#303036] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Scroll destinations left"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <div
+                          ref={guidedLocationsRef}
+                          className="flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                        >
+                        {GUIDED_LOCATIONS.map(({ name: location, description }) => (
                           <button
                             key={location}
                             type="button"
                             onClick={() => handleGuidedDetailsChange({ location }, 1)}
-                            className="rounded-xl border border-[#38383e] bg-[#252529] px-4 py-4 text-left transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                            className="min-h-28 basis-full shrink-0 snap-start rounded-xl border border-[#38383e] bg-[#252529] px-3 py-3 text-left transition hover:border-[#a1a1aa] hover:bg-[#2b2b31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-24 sm:basis-[calc((100%-0.75rem)/2)] sm:px-3 sm:py-3 lg:min-h-28 lg:px-4 lg:py-4"
                           >
                             <MapPin className="mb-3 h-5 w-5 text-[#d4d4d8]" />
                             <span className="block text-base font-semibold text-[#ededf0]">{location}</span>
                             <span className="mt-1 block text-xs text-[#92929b]">
-                              {location === 'Goa'
-                                ? 'Beaches, islands, and river routes'
-                                : 'Harbor landmarks and Mandwa cruises'}
+                              {description}
                             </span>
                           </button>
                         ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            guidedLocationsRef.current?.scrollBy({
+                              left: guidedLocationsRef.current.clientWidth,
+                              behavior: 'smooth',
+                            })
+                          }
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#38383e] bg-[#252529] text-[#c5c5cc] transition hover:bg-[#303036] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                          aria-label="Scroll destinations right"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
                       </div>
                     )}
 
