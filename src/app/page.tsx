@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Send,
   Loader2,
@@ -31,10 +32,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Sidebar, ChatSession, Message } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
+import yachtCatalog from '../../data/yacht_data.json';
+import type { Yacht } from '../lib/agent/state';
 
 const USER_ID_KEY = 'yacht_concierge_user_id';
 const SESSIONS_STORAGE_KEY = 'yacht_concierge_sessions';
 const ACTIVE_SESSION_KEY = 'yacht_concierge_active_session_id';
+const CATALOG_YACHTS: Yacht[] = yachtCatalog;
 
 const DESTINATION_CARDS = [
   {
@@ -231,6 +235,31 @@ const extractPhotos = (markdown: string): { alt: string; src: string }[] => {
   return photos;
 };
 
+const findMentionedYachts = (text: string): Yacht[] => {
+  const normalizedText = text.toLocaleLowerCase();
+  return CATALOG_YACHTS
+    .filter((yacht) => normalizedText.includes(yacht.yacht_name.toLocaleLowerCase()))
+    .sort(
+      (first, second) =>
+        normalizedText.indexOf(first.yacht_name.toLocaleLowerCase()) -
+        normalizedText.indexOf(second.yacht_name.toLocaleLowerCase())
+    );
+};
+
+const removeYachtListItems = (text: string, yachts: Yacht[]): string => {
+  if (yachts.length < 2) return text;
+  const yachtNames = yachts.map((yacht) => yacht.yacht_name.toLocaleLowerCase());
+  return text
+    .split('\n')
+    .filter((line) => {
+      const isListItem = /^\s*(?:\d+[.)]|[-*])\s+/.test(line);
+      return !isListItem || !yachtNames.some((name) => line.toLocaleLowerCase().includes(name));
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 // Helper to fix and normalize markdown tables for GFM parsing
 const formatMarkdownTables = (raw: string): string => {
   if (!raw) return '';
@@ -291,6 +320,7 @@ export default function YachtConciergeApp() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const guidedLocationsRef = useRef<HTMLDivElement>(null);
+  const guidedDateInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize guest profile and restore sessions
   // This state must be initialized from browser storage after hydration to avoid server/client mismatches.
@@ -835,17 +865,47 @@ export default function YachtConciergeApp() {
                     {guidedStep === 1 && (
                       <label className="block max-w-sm">
                         <span className="mb-2 block text-xs font-medium text-[#a2a2ab]">Charter date</span>
-                        <input
-                          type="date"
-                          min={new Date().toISOString().slice(0, 10)}
-                          value={guidedDetails.date || ''}
-                          onChange={(event) => {
-                            if (event.target.value) {
-                              handleGuidedDetailsChange({ date: event.target.value }, 2);
+                        <div className="flex gap-2">
+                          <input
+                            ref={guidedDateInputRef}
+                            type="date"
+                            min={(() => {
+                              const today = new Date();
+                              const month = String(today.getMonth() + 1).padStart(2, '0');
+                              const day = String(today.getDate()).padStart(2, '0');
+                              return `${today.getFullYear()}-${month}-${day}`;
+                            })()}
+                            value={guidedDetails.date || ''}
+                            onChange={(event) =>
+                              setGuidedDetails((current) => ({ ...current, date: event.target.value }))
                             }
-                          }}
-                          className="w-full rounded-lg border border-[#3b3b42] bg-[#202024] px-3 py-2.5 text-sm text-[#e7e7e9] outline-none focus:border-white"
-                        />
+                            className="date-input-no-native-icon min-w-0 flex-1 rounded-lg border border-[#3b3b42] bg-[#202024] px-3 py-2.5 text-sm text-[#e7e7e9] outline-none focus:border-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const dateInput = guidedDateInputRef.current;
+                              if (!dateInput) return;
+                              if (typeof dateInput.showPicker === 'function') {
+                                dateInput.showPicker();
+                              } else {
+                                dateInput.focus();
+                              }
+                            }}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#3b3b42] bg-[#252529] text-[#c5c5cc] transition hover:bg-[#303036] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                            aria-label="Open calendar"
+                          >
+                            <Calendar className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!guidedDetails.date}
+                          onClick={() => handleGuidedDetailsChange({ date: guidedDetails.date }, 2)}
+                          className="mt-3 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#19191c] transition hover:bg-[#e7e7e9] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Continue
+                        </button>
                       </label>
                     )}
 
@@ -1093,6 +1153,9 @@ export default function YachtConciergeApp() {
               const isUser = message.sender === 'user';
               const itineraryMeta = !isUser ? parseItineraryMeta(message.text) : null;
               const photos = !isUser ? extractPhotos(message.text) : [];
+              const mentionedYachts = !isUser && !itineraryMeta
+                ? findMentionedYachts(message.text)
+                : [];
               let cleanText = message.text;
               if (!isUser) {
                 cleanText = cleanText
@@ -1101,6 +1164,7 @@ export default function YachtConciergeApp() {
                     ''
                   )
                   .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+                cleanText = removeYachtListItems(cleanText, mentionedYachts);
                 if (itineraryMeta) {
                   cleanText = cleanText.replace(
                     /(?:^|\r?\n)#{1,6}\s*Booking Summary\s*\r?\n(?:[-*]\s+\*\*[^*\r\n]+:\*\*[^\r\n]*(?:\r?\n|$))+/i,
@@ -1263,6 +1327,95 @@ export default function YachtConciergeApp() {
                         {cleanText}
                       </ReactMarkdown>
                     </div>
+
+                    {!isUser && mentionedYachts.length > 0 && (
+                      <section
+                        aria-label="Yachts mentioned"
+                        className="mt-4 grid grid-cols-1 items-start gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+                      >
+                        {mentionedYachts.map((yacht) => (
+                          <article
+                            key={yacht.id}
+                            className="w-full min-w-0 overflow-hidden rounded-lg border border-[#3b3b42] bg-[#252529]"
+                          >
+                            {yacht.photos[0] && (
+                              <button
+                                type="button"
+                                onClick={() => setLightboxImage(yacht.photos[0])}
+                                aria-label={`Enlarge ${yacht.yacht_name} photo`}
+                                className="group relative block aspect-[2/1] w-full overflow-hidden bg-[#19191c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                              >
+                                <Image
+                                  src={yacht.photos[0]}
+                                  alt={`${yacht.yacht_name} yacht`}
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 240px"
+                                  className="object-cover transition duration-300 group-hover:scale-105"
+                                />
+                                <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                  <Maximize2 className="h-3.5 w-3.5" />
+                                </span>
+                              </button>
+                            )}
+                            <div className="p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <h3 className="truncate text-sm font-semibold text-[#ededf0]">
+                                    {yacht.yacht_name}
+                                  </h3>
+                                  <p className="mt-0.5 text-[11px] capitalize text-[#92929b]">
+                                    {yacht.location} · {yacht.type.replaceAll('-', ' ')}
+                                  </p>
+                                </div>
+                                <p className="shrink-0 text-right text-xs font-semibold text-[#e7e7e9]">
+                                  ₹{yacht.rate_hr.toLocaleString('en-IN')}
+                                  <span className="block text-[10px] font-normal text-[#92929b]">per hour</span>
+                                </p>
+                              </div>
+                              <p className="mt-2.5 text-xs text-[#b0b0b8]">
+                                {yacht.size_ft} ft <span className="px-1 text-[#65656e]">·</span>
+                                Up to {yacht.max_capacity} guests
+                                <span className="px-1 text-[#65656e]">·</span>
+                                {yacht.min_duration_hr} hr minimum
+                              </p>
+                              {yacht.features.length > 0 && (
+                                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                                  {yacht.features.slice(0, 3).map((feature) => (
+                                    <span
+                                      key={feature}
+                                      className="rounded-md border border-[#3b3b42] bg-[#202024] px-2 py-1 text-[10px] capitalize text-[#a2a2ab]"
+                                    >
+                                      {feature}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {yacht.photos.length > 1 && (
+                                <div className="mt-2.5 flex gap-2">
+                                  {yacht.photos.slice(1, 3).map((photo, index) => (
+                                    <button
+                                      key={photo}
+                                      type="button"
+                                      onClick={() => setLightboxImage(photo)}
+                                      aria-label={`Enlarge ${yacht.yacht_name} photo ${index + 2}`}
+                                      className="relative aspect-[4/3] w-14 overflow-hidden rounded-md border border-[#3b3b42] bg-[#19191c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                    >
+                                      <Image
+                                        src={photo}
+                                        alt={`${yacht.yacht_name} view ${index + 2}`}
+                                        fill
+                                        sizes="64px"
+                                        className="object-cover"
+                                      />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </article>
+                        ))}
+                      </section>
+                    )}
 
                     {/* Interactive Charter Confirmation Action */}
                     {!isUser && message.text.includes('Shall I proceed with the itinerary?') && (
