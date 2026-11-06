@@ -382,7 +382,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Yacht Matchmaker - Lite
               </span>
               <span className="text-[9px] font-medium uppercase tracking-wide text-[#777780]">
-                LangGraph Concierge
+                Private Charter Concierge
               </span>
             </div>
           </div>

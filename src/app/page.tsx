@@ -22,7 +22,6 @@ import {
   Check,
   PanelLeftOpen,
   ArrowUp,
-  Anchor,
   RotateCw,
   AlertCircle,
 } from 'lucide-react';
@@ -34,6 +33,51 @@ import { SettingsModal } from './components/SettingsModal';
 const USER_ID_KEY = 'yacht_concierge_user_id';
 const SESSIONS_STORAGE_KEY = 'yacht_concierge_sessions';
 const ACTIVE_SESSION_KEY = 'yacht_concierge_active_session_id';
+
+const DESTINATION_CARDS = [
+  {
+    name: 'Andaman',
+    title: 'Island-hopping escapes',
+    description: 'Clear waters, quiet coves, and island routes',
+    image: '/yachts/island_serenity/exterior.jpg',
+  },
+  {
+    name: 'Chennai',
+    title: 'The Coromandel coast',
+    description: 'Open-water views along the eastern shoreline',
+    image: '/yachts/coromandel_breeze/exterior.jpg',
+  },
+  {
+    name: 'Goa',
+    title: 'Golden-hour escapes',
+    description: 'Quiet coves, island routes, and open-water sunsets',
+    image: '/yachts/black_diamond/exterior.jpg',
+  },
+  {
+    name: 'Kochi',
+    title: 'Harbor to open sea',
+    description: 'Coastal views and relaxed harbor departures',
+    image: '/yachts/malabar_pearl/exterior.jpg',
+  },
+  {
+    name: 'Lakshadweep',
+    title: 'Turquoise lagoons',
+    description: 'Island scenery and clear-water adventures',
+    image: '/yachts/lagoon_dream/exterior.jpg',
+  },
+  {
+    name: 'Mumbai',
+    title: 'The city, from the sea',
+    description: 'Harbor landmarks, Mandwa cruises, and celebrations afloat',
+    image: '/yachts/azure_voyager/exterior.jpg',
+  },
+  {
+    name: 'Pondicherry',
+    title: 'Coastal calm',
+    description: 'Easygoing cruises along the eastern coast',
+    image: '/yachts/coral_breeze/exterior.jpg',
+  },
+];
 
 const QUICK_PROMPTS = [
   {
@@ -660,45 +704,18 @@ export default function YachtConciergeApp() {
       />
 
       {/* Main Chat Workspace */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#1c1c1f]">
-        {/* Top Navbar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#34343a] bg-[#202024] px-3 sm:px-5">
-          <div className="flex items-center gap-3">
-            {!isSidebarOpen && (
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="rounded-lg border border-[#34343a] bg-[#27272c] p-2 text-[#a2a2ab] transition hover:bg-[#303036] hover:text-white"
-                title="Expand sidebar"
-              >
-                <PanelLeftOpen className="h-4 w-4" />
-              </button>
-            )}
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#19191c] shadow-sm">
-                <Anchor className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="flex items-center gap-2 text-[13px] font-semibold tracking-tight text-[#ededf0]">
-                  <span>Ariel</span>
-                  <span className="rounded-md border border-[#45454c] bg-[#303036] px-1.5 py-0.5 text-[9px] font-medium text-[#d4d4d8]">
-                    Luxury Concierge
-                  </span>
-                </h1>
-                <p className="text-[10px] text-[#92929b]">
-                  Private Charter Itinerary & Flotilla Advisor
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-1.5 rounded-md border border-[#34343a] bg-[#252529] px-2.5 py-1 text-xs text-[#a2a2ab] sm:flex">
-              <MapPin className="h-3.5 w-3.5 text-[#d4d4d8]" />
-              <span className="text-[11px] font-medium">Serving Goa & Mumbai</span>
-            </div>
-          </div>
-        </header>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#1c1c1f]">
+        {!isSidebarOpen && (
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            className="absolute left-3 top-3 z-10 rounded-lg border border-[#34343a] bg-[#27272c] p-2 text-[#a2a2ab] transition hover:bg-[#303036] hover:text-white"
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Message Feed */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4 sm:py-6 md:px-8 scrollbar-thin">
@@ -955,13 +972,9 @@ export default function YachtConciergeApp() {
                 </div>
               </section>
             ) : (
-            <section className="mx-auto flex min-h-full max-w-4xl flex-col justify-start py-4 sm:justify-center sm:py-8">
+            <section className="mx-auto flex min-h-full max-w-6xl flex-col justify-start py-4 sm:justify-center sm:py-8">
               <div className="mb-7 text-center">
-                <span className="inline-flex items-center gap-2 rounded-md border border-[#45454c] bg-[#303036] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#d4d4d8]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Private yacht charters · Goa & Mumbai
-                </span>
-                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-[#ededf0] sm:text-3xl">
+                <h2 className="text-2xl font-semibold tracking-tight text-[#ededf0] sm:text-3xl">
                   Where will the water take you?
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#a2a2ab]">
@@ -970,58 +983,34 @@ export default function YachtConciergeApp() {
                 </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleWelcomePrompt(
-                      'I’m planning a yacht charter in Goa for 8 guests. Help me choose a route and experience.'
-                    )
-                  }
-                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-xl border border-white/10 bg-slate-300 bg-cover bg-center p-4 text-left shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-56"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(180deg, rgba(15,15,20,0.04) 10%, rgba(15,15,20,0.28) 42%, rgba(15,15,20,0.88) 100%), url('/yachts/black_diamond/exterior.jpg')",
-                  }}
-                >
-                  <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85">
-                    <MapPin className="h-3.5 w-3.5" />
-                    Goa
-                  </span>
-                  <span className="text-lg font-semibold text-white">Golden-hour escapes</span>
-                  <span className="mt-1 text-xs text-white/85">
-                    Quiet coves, island routes, and open-water sunsets
-                  </span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-white/80">
-                    Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleWelcomePrompt(
-                      'I’m planning a yacht charter in Mumbai for 8 guests. Help me choose a route and experience.'
-                    )
-                  }
-                  className="group relative flex min-h-52 flex-col justify-end overflow-hidden rounded-xl border border-white/10 bg-slate-300 bg-cover bg-center p-4 text-left shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-56"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(180deg, rgba(15,15,20,0.04) 10%, rgba(15,15,20,0.28) 42%, rgba(15,15,20,0.88) 100%), url('/yachts/azure_voyager/exterior.jpg')",
-                  }}
-                >
-                  <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85">
-                    <MapPin className="h-3.5 w-3.5" />
-                    Mumbai
-                  </span>
-                  <span className="text-lg font-semibold text-white">The city, from the sea</span>
-                  <span className="mt-1 text-xs text-white/85">
-                    Harbor landmarks, Mandwa cruises, and celebrations afloat
-                  </span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-white/80">
-                    Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
-                  </span>
-                </button>
+              <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-3 pb-3 scrollbar-thin sm:-mx-4 sm:px-4 md:-mx-8 md:px-8">
+                {DESTINATION_CARDS.map(({ name, title, description, image }) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() =>
+                      handleWelcomePrompt(
+                        `I’m planning a yacht charter in ${name} for 8 guests. Help me choose a route and experience.`
+                      )
+                    }
+                    className="group relative flex min-h-48 w-[min(78vw,18rem)] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-xl border border-white/10 bg-slate-300 bg-cover bg-center p-3 text-left shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:min-h-52 sm:w-[18rem] sm:p-4"
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(15,15,20,0.04) 10%, rgba(15,15,20,0.28) 42%, rgba(15,15,20,0.88) 100%), url('${image}')`,
+                    }}
+                  >
+                    <span className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      {name}
+                    </span>
+                    <span className="text-base font-semibold leading-tight text-white sm:text-lg">
+                      {title}
+                    </span>
+                    <span className="mt-1 text-xs leading-snug text-white/85">{description}</span>
+                    <span className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-white transition group-hover:text-white/80">
+                      Start planning <ArrowUp className="h-3.5 w-3.5 rotate-45" />
+                    </span>
+                  </button>
+                ))}
               </div>
 
               <button
